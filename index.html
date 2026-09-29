@@ -1,0 +1,1199 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Gestión de Balanzas CGPBB, demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EEF0F3; --surface:#FFFFFF; --surface-2:#F8F9FB; --ink:#15171C; --muted:#4A5160;
+  --line:#DDE1E7; --line-2:#E3E6EB; --input:#CDD2DA; --brand:#10245C; --brand-2:#1C3576; --brand-ink:#FFFFFF;
+  --brand-soft:#E9EEF9; --brand-text:#10245C; --info:#0B4DB7; --info-soft:#E6EEFB;
+  --warn:#8A4300; --warn-soft:#FFF1DC; --note:#FFF4E5; --note-ink:#6B3600;
+  --top-bg:#10245C; --top-muted:#C9D3EA; --top-line:#3A4E86;
+  --visor-bg:#0F1E45; --visor-muted:#B8C2DA; --visor-pill:#1F3A7A;
+  --focus:#1D5FD6; --shadow:0 18px 50px rgba(10,20,45,.22);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E1218; --surface:#161B24; --surface-2:#1C2230; --ink:#E7EAF0; --muted:#A7AFBD;
+    --line:#2B3342; --line-2:#252C39; --input:#374154; --brand:#3656B8; --brand-2:#27407F; --brand-ink:#FFFFFF;
+    --brand-soft:#1D2946; --brand-text:#A9C1FF; --info:#93B6FF; --info-soft:#1A2A47;
+    --warn:#FFB866; --warn-soft:#3A2711; --note:#33230F; --note-ink:#FFD29A;
+    --top-bg:#0B1633; --top-muted:#B4C0DC; --top-line:#263A74;
+    --visor-bg:#060C1E; --visor-muted:#A3B0CF; --visor-pill:#1A2C5E;
+    --focus:#7FA8FF; --shadow:0 18px 50px rgba(0,0,0,.5);
+  }
+}
+:root[data-theme="dark"]{
+    --bg:#0E1218; --surface:#161B24; --surface-2:#1C2230; --ink:#E7EAF0; --muted:#A7AFBD;
+    --line:#2B3342; --line-2:#252C39; --input:#374154; --brand:#3656B8; --brand-2:#27407F; --brand-ink:#FFFFFF;
+    --brand-soft:#1D2946; --brand-text:#A9C1FF; --info:#93B6FF; --info-soft:#1A2A47;
+    --warn:#FFB866; --warn-soft:#3A2711; --note:#33230F; --note-ink:#FFD29A;
+    --top-bg:#0B1633; --top-muted:#B4C0DC; --top-line:#263A74;
+    --visor-bg:#060C1E; --visor-muted:#A3B0CF; --visor-pill:#1A2C5E;
+    --focus:#7FA8FF; --shadow:0 18px 50px rgba(0,0,0,.5);
+}
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);}
+*,*::before,*::after{box-sizing:border-box}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{height:100%;margin:0;background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+h1,h2,h3{margin:0;line-height:1.2}
+h1{font-size:22px;font-weight:700}
+h2{font-size:15px;font-weight:600}
+p{margin:0}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.num{font-variant-numeric:tabular-nums}
+.mono{font-family:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace}
+
+/* estructura */
+#app{height:100%;display:grid;grid-template-rows:64px 46px minmax(0,1fr)}
+.top{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:0 24px;background:var(--top-bg);color:#fff;min-width:0}
+.top-l,.top-r{display:flex;align-items:center;gap:16px;min-width:0}
+.top-r{gap:20px}
+.brand{font-size:18px;font-weight:700;white-space:nowrap}
+.brand-sub{font-size:14px;color:var(--top-muted)}
+.top .sep{width:1px;height:24px;background:var(--top-line)}
+.place{height:38px;border:1px solid transparent;border-radius:8px;background:transparent;color:#fff;font-size:15px;font-weight:500;padding:0 8px;cursor:pointer;max-width:280px}
+.place:hover{border-color:var(--top-line)}
+.place option{color:#15171C}
+.pill{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;font-size:13px;white-space:nowrap}
+.pill .dot{width:8px;height:8px;border-radius:50%}
+.pill.on{background:var(--brand-2);color:#fff}.pill.on .dot{background:#8FBCFF}
+.pill.off{background:#FFE2B8;color:#5A2C00;font-weight:500}.pill.off .dot{background:#C25E00}
+.pill.sync{background:var(--brand-2);color:#fff}.pill.sync .dot{background:#8FBCFF;animation:blink 1s infinite}
+@keyframes blink{50%{opacity:.25}}
+.who{font-size:13px;color:var(--top-muted);white-space:nowrap}
+.tbtn{height:40px;padding:0 16px;border-radius:8px;border:1px solid var(--top-line);background:transparent;color:#fff;font-size:13px;cursor:pointer;white-space:nowrap}
+.tbtn:hover{background:var(--brand-2)}
+.navbar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:0 20px;background:var(--surface);border-bottom:1px solid var(--line);min-width:0}
+.navbar .tabs2{display:flex;gap:2px;overflow-x:auto;height:100%}
+.navbar .tabs2 a{display:flex;align-items:center;padding:0 12px;color:var(--muted);text-decoration:none;font-size:14px;font-weight:500;border-bottom:2px solid transparent;white-space:nowrap}
+.navbar .tabs2 a:hover{color:var(--ink)}
+.navbar .tabs2 a[aria-current="page"]{color:var(--brand-text);border-bottom-color:var(--brand-text);font-weight:600}
+.main{overflow:auto;padding:20px 24px 90px;min-width:0}
+.page-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:16px;flex-wrap:wrap}
+.page-head h1{font-size:24px}
+.page-head p{margin-top:4px}
+
+/* componentes */
+.card,.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px}
+.pad{padding:18px}
+.slabel{font-size:12px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:var(--muted)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:44px;padding:0 18px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap;text-decoration:none}
+.btn:hover:not(:disabled){border-color:var(--muted)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:var(--brand-ink);padding:0 22px}
+.btn.primary:hover:not(:disabled){background:var(--brand-2);border-color:var(--brand-2)}
+.btn.outline{border-color:var(--brand-text);color:var(--brand-text)}
+.btn.warn{border-color:var(--warn);color:var(--warn)}
+.btn.xl{height:56px;font-size:16px;border-radius:10px}
+.btn.sm{height:36px;padding:0 12px;font-size:13px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.link{background:none;border:0;padding:0;color:var(--brand-text);font-weight:600;cursor:pointer;text-decoration:underline;text-underline-offset:2px;font-size:14px}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap}
+.b-info{background:var(--info-soft);color:var(--info)}
+.b-warn{background:var(--warn-soft);color:var(--warn)}
+.b-muted{background:var(--brand-soft);color:var(--brand-text)}
+.field{display:flex;flex-direction:column;gap:4px;min-width:0}
+.field>span{font-size:12px;font-weight:500;color:var(--muted);display:flex;justify-content:space-between;gap:8px}
+.field>span em{font-style:normal;color:var(--info);font-weight:600;font-size:11px}
+.field input,.field select,.field textarea{height:40px;border:1px solid var(--input);border-radius:8px;background:var(--surface);padding:0 12px;min-width:0;width:100%;font-size:14px}
+.field textarea{height:auto;padding:10px 12px;resize:vertical;min-height:58px}
+.field input[readonly],.field textarea[readonly]{background:var(--surface-2)}
+.field input:disabled,.field select:disabled{background:var(--surface-2);opacity:.8}
+.platebox{height:40px;display:flex;align-items:center}
+.check{display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer}
+.check input{width:18px;height:18px;accent-color:var(--brand)}
+.g2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 16px}
+.g3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.g4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px 16px}
+.stack{display:flex;flex-direction:column;gap:16px}
+.row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.between{justify-content:space-between}
+.tblwrap{overflow-x:auto}
+.tbl{width:100%;border-collapse:collapse;font-size:13.5px}
+.tbl th{text-align:left;font-size:12px;color:var(--muted);font-weight:600;padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+.tbl td{padding:9px 12px;border-bottom:1px solid var(--bg);font-variant-numeric:tabular-nums;vertical-align:middle}
+.tbl tr:last-child td{border-bottom:0}
+.tbl .r{text-align:right}
+.tbl tbody tr:hover td{background:var(--surface-2)}
+.empty{padding:28px;text-align:center;color:var(--muted)}
+.tabs{display:flex;gap:4px;flex-wrap:wrap;border-bottom:1px solid var(--line);margin-bottom:16px}
+.tabs a{padding:10px 14px;text-decoration:none;color:var(--muted);font-weight:500;border-bottom:2px solid transparent;margin-bottom:-1px}
+.tabs a[aria-current="page"]{color:var(--brand-text);border-bottom-color:var(--brand-text);font-weight:600}
+.note{display:flex;gap:10px;padding:10px 12px;border-radius:8px;font-size:13px;line-height:1.4}
+.note.warn{background:var(--note);color:var(--note-ink)}
+.note.info{background:var(--info-soft);color:var(--info)}
+.note svg{flex-shrink:0;margin-top:1px}
+.kv{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px 18px;margin:0}
+.kv div{min-width:0}
+.kv dt{font-size:12px;color:var(--muted);font-weight:500;margin-bottom:3px}
+.kv dd{margin:0;font-weight:500;overflow-wrap:break-word}
+
+/* patente argentina */
+.plate{display:inline-flex;flex-direction:column;vertical-align:middle;border:1.5px solid #1A1A1A;border-radius:5px;background:#FFFFFF;color:#111111;overflow:hidden;line-height:1;flex-shrink:0}
+.plate-band{background:#1B3F9C;color:#FFFFFF;height:9px;display:flex;align-items:center;justify-content:center;gap:4px;font-family:"IBM Plex Sans",system-ui,sans-serif;font-size:5.5px;font-weight:700;letter-spacing:.4px;padding:0 4px;white-space:nowrap}
+.plate-band svg{display:block}
+.plate-num{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;font-size:19px;letter-spacing:1.2px;padding:2px 9px 3px;text-align:center;white-space:nowrap}
+.plates{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+.plates .cap{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted)}
+
+/* puesto */
+.puesto{display:grid;grid-template-columns:360px minmax(0,1fr) 340px;gap:20px;align-items:start}
+.col{display:flex;flex-direction:column;gap:16px;min-width:0}
+.visor{background:var(--visor-bg);color:#FFFFFF;border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:10px}
+.visor .vlabel{font-size:12px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:var(--visor-muted)}
+.vnum{display:flex;align-items:baseline;gap:10px}
+.vnum #visor-num{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:68px;font-weight:600;line-height:1;font-variant-numeric:tabular-nums}
+.vunit{font-size:22px;color:var(--visor-muted)}
+.vfoot{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.vstate{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:var(--visor-pill);font-size:13px;font-weight:600}
+.vstate i{width:8px;height:8px;border-radius:50%;background:#7F8BA8}
+.vstate.stable i{background:#8FBCFF}
+.vstate.moving i{background:#FFB45C;animation:blink .6s infinite}
+.vconn{font-size:12px;color:var(--visor-muted)}
+.ejes-card{padding:18px;display:flex;flex-direction:column;gap:12px}
+.axles{display:flex;gap:10px}
+.axle{display:flex;flex-direction:column;align-items:center;gap:4px}
+.axle span{width:34px;height:14px;border-radius:7px;background:var(--brand-text)}
+.axle small{font-size:11px;color:var(--muted)}
+.meter{height:10px;border-radius:5px;background:var(--line-2);overflow:hidden}
+.meter span{display:block;height:100%;background:var(--brand-text)}
+.meter.over span{background:var(--warn)}
+.kline{display:flex;justify-content:space-between;gap:8px;font-size:13px;color:var(--muted)}
+.kline b{color:var(--ink);font-weight:500}
+.cert{padding:14px 18px;display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:13px}
+.ticket{padding:22px 24px;display:flex;flex-direction:column;gap:16px}
+.tk-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.tk-head p{margin-top:4px;font-size:13px;color:var(--muted)}
+.tk-actions{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-top:4px}
+.tk-actions .row{gap:12px}
+.weights{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.wbox{border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.wbox .lbl{font-size:12px;color:var(--muted)}
+.wbox .val{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:24px;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.wbox .soft{font-size:14px;font-weight:600;color:var(--muted);padding-top:4px}
+.wbox.live{border-style:dashed;border-color:var(--brand-text)}
+.wbox.net{background:var(--brand);border-color:var(--brand);color:var(--brand-ink)}
+.wbox.net .lbl,.wbox.net .soft{color:var(--top-muted)}
+.plist{display:flex;flex-direction:column;gap:8px}
+.pitem{display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%;min-height:58px;padding:8px 12px;border:1px solid var(--line-2);border-radius:8px;background:var(--surface);text-align:left;cursor:pointer}
+.pitem:hover{border-color:var(--muted)}
+.pitem[aria-pressed="true"]{border-color:var(--brand-text);background:var(--brand-soft)}
+.pitem .l{display:flex;flex-direction:column;gap:5px;min-width:0}
+.pitem .sub{font-size:12px;color:var(--muted)}
+.pitem .t{font-size:13px;color:var(--muted);text-align:right;white-space:nowrap}
+.simbox{border:1px dashed var(--muted);border-radius:12px;background:transparent}
+.simbox summary{cursor:pointer;padding:12px 16px;font-weight:600;font-size:14px}
+.simbox .inner{padding:0 16px 16px;display:flex;flex-direction:column;gap:8px}
+.simbox .row .btn{flex:1}
+.g4c{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,.55fr) minmax(0,1.6fr);gap:12px 16px}
+
+/* panel */
+.filters{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap}
+.filters .field select{background:var(--surface)}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-bottom:16px}
+.kpi{padding:18px 20px;display:flex;flex-direction:column;gap:6px}
+.kpi .l{font-size:13px;color:var(--muted)}
+.kpi .v{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:34px;font-weight:600;line-height:1.1;font-variant-numeric:tabular-nums}
+.kpi .s{font-size:12px;color:var(--muted)}
+.dash{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:16px;margin-bottom:16px}
+.bars{height:196px;display:flex;align-items:flex-end;gap:12px;border-bottom:1px solid var(--line)}
+.bar{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:6px;height:100%;min-width:0}
+.bar i{display:block;width:100%;max-width:44px;border-radius:4px 4px 0 0;background:var(--brand-text)}
+.bar b{font-size:11px;font-weight:400;color:var(--muted)}
+.bars-x{display:flex;gap:12px;padding-top:6px}
+.bars-x span{flex:1;text-align:center;font-size:12px;color:var(--muted)}
+.bcard{border:1px solid var(--line-2);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;font-size:12px}
+
+/* diálogos y avisos */
+dialog{border:0;border-radius:14px;padding:0;background:var(--surface);color:var(--ink);width:min(580px,calc(100% - 32px));max-height:calc(100% - 40px);box-shadow:var(--shadow)}
+dialog.wide{width:min(880px,calc(100% - 32px))}
+dialog.narrow{width:min(430px,calc(100% - 32px))}
+dialog::backdrop{background:rgba(8,14,32,.5)}
+.dlg-h{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:18px 20px;border-bottom:1px solid var(--line-2)}
+.dlg-h h2{font-size:17px}
+.dlg-b{padding:18px 20px;display:flex;flex-direction:column;gap:14px}
+.dlg-f{display:flex;justify-content:flex-end;gap:10px;padding:14px 20px;border-top:1px solid var(--line-2);flex-wrap:wrap}
+.xbtn{width:36px;height:36px;border-radius:8px;border:1px solid var(--line);background:var(--surface);cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+.toasts{position:fixed;right:20px;bottom:calc(20px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:8px;z-index:60;max-width:min(420px,calc(100% - 40px))}
+.toast{background:var(--ink);color:var(--surface);padding:12px 16px;border-radius:10px;font-size:14px;box-shadow:var(--shadow);animation:tin .2s ease-out}
+.toast.warn{background:#6A3400;color:#fff}
+@keyframes tin{from{transform:translateY(8px);opacity:0}}
+.login{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:20px;background:var(--top-bg);overflow:auto}
+.login-card{width:min(440px,100%);padding:28px;display:flex;flex-direction:column;gap:16px}
+.login-card .lbrand{display:flex;align-items:center;gap:10px;font-size:20px;font-weight:700}
+.login-card .lbrand small{font-size:14px;font-weight:500;color:var(--muted)}
+.comp{background:var(--bg);padding:20px;display:flex;flex-direction:column;gap:14px}
+.comp .qcard{padding:16px;display:flex;flex-direction:column;align-items:center;gap:10px}
+.comp .qrbox{padding:10px;background:#fff;border:1px solid var(--line);border-radius:8px}
+.comp .qr{display:block}
+.comp .dcard{padding:6px 16px}
+.comp .drow{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--bg);font-size:13px}
+.comp .drow:last-child{border-bottom:0}
+.comp .drow span:first-child{color:var(--muted)}
+.comp .drow span:last-child{text-align:right;font-weight:500}
+.comp .w3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.comp .w3>div{padding:10px;display:flex;flex-direction:column;gap:2px}
+.comp .w3 small{font-size:11px;color:var(--muted)}
+.comp .w3 b{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:14px}
+.comp .w3 .net{background:var(--brand);border-color:var(--brand);color:#fff;border-radius:12px}
+.comp .w3 .net small{color:var(--top-muted)}
+.steps{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:8px}
+
+@media (max-width:1380px){
+  .puesto{grid-template-columns:330px minmax(0,1fr)}
+  .puesto>.col-side{grid-column:1 / -1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start}
+  .who{display:none}
+}
+@media (max-width:1040px){
+  .puesto{grid-template-columns:1fr}
+  .puesto>.col-side{grid-template-columns:1fr}
+  .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .dash{grid-template-columns:1fr}
+  .brand-sub,.top .sep{display:none}
+}
+@media (max-width:1040px){.g4c{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:640px){
+  #app{grid-template-rows:auto 46px minmax(0,1fr)}
+  .g4c{grid-template-columns:1fr}
+  .top{flex-wrap:wrap;padding:10px 14px;gap:10px}
+  .g2,.g3,.g4,.kv,.weights{grid-template-columns:1fr}
+  .main{padding:16px 14px 90px}
+  .vnum #visor-num{font-size:54px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media print{
+  body *{visibility:hidden}
+  .print-area,.print-area *{visibility:visible}
+  .print-area{position:fixed;left:0;top:0;width:100%}
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div class="toasts" id="toasts" aria-live="polite"></div>
+<script>
+(function(){
+'use strict';
+/* ---------- utilidades ---------- */
+var LS_KEY='cgpbb-balanzas-demo-v1';
+var MIN=60000, HOUR=3600000, DAY=86400000;
+function $(s,r){return (r||document).querySelector(s);}
+function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s));}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function kg(n){return Math.round(n).toLocaleString('es-AR');}
+function r20(n){return Math.round(n/20)*20;}
+function pad(n){return String(n).padStart(2,'0');}
+function hora(ts){var d=new Date(ts);return pad(d.getHours())+':'+pad(d.getMinutes());}
+function fecha(ts){var d=new Date(ts);return pad(d.getDate())+'/'+pad(d.getMonth()+1)+'/'+d.getFullYear();}
+function fh(ts){return fecha(ts)+' '+hora(ts);}
+function isoDate(ts){var d=new Date(ts);return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());}
+function num(t){return String(t).padStart(6,'0');}
+function normPat(p){return String(p||'').toUpperCase().replace(/[^A-Z0-9]/g,'').replace(/^([A-Z]{2})(\d{3})([A-Z]{2})$/,'$1 $2 $3');}
+
+var USERS=[
+  {id:'mferreyra',nombre:'M. Ferreyra',rol:'Operador de balanza'},
+  {id:'lsuarez',nombre:'L. Suárez',rol:'Supervisor de Operaciones'},
+  {id:'rdiaz',nombre:'R. Díaz',rol:'Administrador'}
+];
+function isAdmin(){return S.user&&S.user.rol==='Administrador';}
+function isSup(){return S.user&&(S.user.rol==='Administrador'||S.user.rol==='Supervisor de Operaciones');}
+function turno(){var h=new Date().getHours();if(h>=6&&h<14)return 'Turno de 6 a 14 h';if(h>=14&&h<22)return 'Turno de 14 a 22 h';return 'Turno de 22 a 6 h';}
+
+/* ---------- datos de ejemplo ---------- */
+function seed(){
+  var now=Date.now();
+  var s={
+    version:1, seededAt:now, user:null, balanzaId:2, seq:4201,
+    reglas:{ejes:{2:18000,3:27000,4:36000,5:45000,6:45000},tolerancia:5,pesoMinimo:500},
+    parametros:{lugarAutomatico:true,envioAutomatico:false},
+    lugares:[{id:'GAL',nombre:'Puerto Galván'},{id:'IW',nombre:'Ingeniero White'}],
+    balanzas:[
+      {id:1,nombre:'Balanza 1',lugar:'GAL',marca:'Toledo',puerto:'COM3',baudios:4800,online:true,pendSync:0,lastSync:now-2*MIN,cert:{numero:'CAL-0418',desde:now-347*DAY,hasta:now+18*DAY}},
+      {id:2,nombre:'Balanza 2',lugar:'GAL',marca:'Toledo',puerto:'COM4',baudios:4800,online:true,pendSync:0,lastSync:now-1*MIN,cert:{numero:'CAL-0587',desde:now-200*DAY,hasta:now+165*DAY}},
+      {id:3,nombre:'Balanza 3',lugar:'IW',marca:'Toledo',puerto:'COM4',baudios:4800,online:true,pendSync:0,lastSync:now-3*MIN,cert:{numero:'CAL-0602',desde:now-265*DAY,hasta:now+98*DAY}}
+    ],
+    clientes:[
+      {id:1,razon:'Agroexportadora del Sur S.A.',cuit:'30-00000001-1',idErp:'C-1024'},
+      {id:2,razon:'Cerealera Pampeana S.A.',cuit:'30-00000002-2',idErp:'C-1031'},
+      {id:3,razon:'Oleaginosas del Plata S.A.',cuit:'30-00000003-3',idErp:'C-1047'},
+      {id:4,razon:'Fertilizantes Bahía S.A.',cuit:'30-00000004-4',idErp:'C-1052'}
+    ],
+    productos:[
+      {id:1,nombre:'Trigo pan',idErp:'P-201'},{id:2,nombre:'Maíz',idErp:'P-205'},
+      {id:3,nombre:'Pellets de soja',idErp:'P-212'},{id:4,nombre:'Cebada cervecera',idErp:'P-219'},
+      {id:5,nombre:'Urea granulada',idErp:'P-305'}
+    ],
+    buques:[
+      {id:1,nombre:'MV Atlántico Sur',imo:'9486221'},{id:2,nombre:'MV Punta Alta',imo:'9512378'},
+      {id:3,nombre:'MV Río Negro',imo:'9433054'},{id:4,nombre:'MV Cabo Corrientes',imo:'9398810'}
+    ],
+    atas:[
+      {id:1,razon:'Agencia Marítima del Sur',cuit:'30-00000010-0'},
+      {id:2,razon:'Transmar Bahía',cuit:'30-00000011-9'},
+      {id:3,razon:'Agencia Puerto Blanco',cuit:'30-00000012-7'}
+    ],
+    choferes:[
+      {dni:'28415902',tipo:'DNI',apellido:'Gómez',nombre:'Martín'},
+      {dni:'31220874',tipo:'DNI',apellido:'Pereyra',nombre:'Lucas'},
+      {dni:'26904411',tipo:'DNI',apellido:'Molina',nombre:'Sergio'},
+      {dni:'33587120',tipo:'DNI',apellido:'Acosta',nombre:'Diego'},
+      {dni:'29778305',tipo:'DNI',apellido:'Ruiz',nombre:'Carlos'},
+      {dni:'35102948',tipo:'DNI',apellido:'Benítez',nombre:'Pablo'}
+    ],
+    documentos:[
+      {id:1,clienteId:1,productoId:1,sim:'26 001 EC01 004512 K'},
+      {id:2,clienteId:2,productoId:2,sim:'26 001 EC01 004498 H'},
+      {id:3,clienteId:3,productoId:3,sim:'26 001 EC01 004507 M'},
+      {id:4,clienteId:1,productoId:4,sim:'26 001 EC01 004530 P'},
+      {id:5,clienteId:4,productoId:5,sim:'26 001 IC04 001377 T'}
+    ],
+    motivos:[
+      {id:1,texto:'Error en la carga de datos'},{id:2,texto:'Pesada duplicada'},
+      {id:3,texto:'Camión retirado sin completar la operación'},{id:4,texto:'Otro'}
+    ],
+    tickets:[], auditoria:[]
+  };
+  var pats=['AF 902 JT','AC 381 PL','AE 554 RK','AB 217 MD','AD 776 WX','AF 115 NB','AE 640 ZC','AB 902 KF','AC 118 RT','AD 433 PP','AE 207 MB','AF 761 CS','AB 355 HD','AC 890 LW','AD 146 GN','AE 988 TQ'];
+  var acops=['AD 318 KC','AB 620 PT','AC 477 WN','AE 309 GL','AF 812 DR','AD 950 MS','AB 133 VH','AC 704 QZ','AE 561 JB','AF 226 LK','AD 087 TX','AB 498 CN','AC 365 FE','AE 742 RW','AF 519 PB','AD 671 HM'];
+  var ops=['M. Ferreyra','J. Ortiz'];
+  var i,t;
+  for(i=0;i<16;i++){
+    var ent=now-(8*60-i*26)*MIN;
+    var dur=(28+(i*11)%34)*MIN;
+    var balId=[1,2,3][i%3];
+    var doc=s.documentos[i%5];
+    var ejes=[5,5,6,5,4,5,6,5][i%8];
+    var tara=r20(13500+(i*431)%2600);
+    var max=s.reglas.ejes[ejes];
+    var neto=r20(Math.min(max-tara-600,24000+(i*977)%7000));
+    var desc=doc.productoId===5;
+    t={id:s.seq++,lugar:bal0(s,balId).lugar,balEnt:balId,balSal:balId,tipo:desc?'Descarga':'Carga',ot:'OT 2026-0'+(360+i),
+      buqueId:(i%4)+1,clienteId:doc.clienteId,productoId:doc.productoId,sim:doc.sim,ataId:(i%3)+1,
+      patente:pats[i],acoplado:acops[i],ejes:ejes,dni:s.choferes[i%6].dni,obs:'',control:false,
+      entrada:{peso:desc?tara+neto:tara,ts:ent,manual:false},salida:null,neto:null,estado:'Pendiente',sync:true,excedido:false};
+    if(i===9){
+      t.estado='Anulado';t.motivo='Pesada duplicada';t.anulacion={ts:ent+6*MIN,usuario:'L. Suárez'};
+      s.auditoria.push(aud0(ent,ops[i%2],'Operador de balanza','Primer pesaje registrado','Ticket '+num(t.id)+', patente '+t.patente,t.id));
+      s.auditoria.push(aud0(ent+6*MIN,'L. Suárez','Supervisor de Operaciones','Ticket anulado','Ticket '+num(t.id)+'. Motivo: Pesada duplicada',t.id));
+    } else {
+      t.salida={peso:desc?tara:tara+neto,ts:ent+dur,manual:false};t.neto=neto;t.estado='Finalizado';
+      s.auditoria.push(aud0(ent,ops[i%2],'Operador de balanza','Primer pesaje registrado','Ticket '+num(t.id)+', patente '+t.patente+', '+kg(t.entrada.peso)+' kg',t.id));
+      s.auditoria.push(aud0(ent+dur,ops[i%2],'Operador de balanza','Ticket cerrado','Ticket '+num(t.id)+', neto '+kg(neto)+' kg',t.id));
+    }
+    s.tickets.push(t);
+  }
+  var pend=[
+    {pat:'AE 123 KL',acop:'AD 456 MN',min:95,bal:1,doc:0,buque:1,ata:1,ejes:5,ent:14320,sal:42780,dni:'28415902'},
+    {pat:'AB 874 TR',acop:'AC 207 LV',min:70,bal:2,doc:1,buque:3,ata:2,ejes:5,ent:15100,sal:44860,dni:'31220874'},
+    {pat:'AF 330 GH',acop:'AE 812 NJ',min:48,bal:1,doc:2,buque:2,ata:3,ejes:5,ent:14780,sal:48100,dni:'26904411'},
+    {pat:'AC 612 QS',acop:'AB 590 FR',min:30,bal:2,doc:0,buque:1,ata:1,ejes:6,ent:15640,sal:43520,dni:'33587120'},
+    {pat:'AD 905 LM',acop:'AF 044 SD',min:12,bal:3,doc:4,buque:4,ata:2,ejes:5,ent:41260,sal:14380,dni:'29778305'}
+  ];
+  pend.forEach(function(p,k){
+    var d=s.documentos[p.doc];var ts=now-p.min*MIN;
+    var tk={id:s.seq++,lugar:bal0(s,p.bal).lugar,balEnt:p.bal,balSal:null,tipo:d.productoId===5?'Descarga':'Carga',ot:'OT 2026-0'+(400+k*3),
+      buqueId:p.buque,clienteId:d.clienteId,productoId:d.productoId,sim:d.sim,ataId:p.ata,patente:p.pat,acoplado:p.acop,ejes:p.ejes,dni:p.dni,obs:'',control:false,
+      entrada:{peso:p.ent,ts:ts,manual:false},salida:null,neto:null,estado:'Pendiente',sync:true,excedido:false,simSalida:p.sal};
+    s.tickets.push(tk);
+    s.auditoria.push(aud0(ts,'M. Ferreyra','Operador de balanza','Primer pesaje registrado','Ticket '+num(tk.id)+', patente '+tk.patente+', '+kg(tk.entrada.peso)+' kg',tk.id));
+  });
+  s.auditoria.push(aud0(now-9*HOUR,'R. Díaz','Administrador','Reglas de pesaje modificadas','Tolerancia por ejes: 5%'));
+  s.auditoria.push(aud0(now-8.5*HOUR,'M. Ferreyra','Operador de balanza','Inicio de sesión','Balanza 2, Puerto Galván'));
+  s.auditoria.sort(function(a,b){return b.ts-a.ts;});
+  return s;
+}
+function bal0(s,id){for(var i=0;i<s.balanzas.length;i++)if(s.balanzas[i].id===id)return s.balanzas[i];return s.balanzas[0];}
+function aud0(ts,u,r,a,d,tid){return {ts:ts,usuario:u,rol:r,accion:a,detalle:d,ticketId:tid||null};}
+
+var S;
+function load(){
+  try{var raw=localStorage.getItem(LS_KEY);if(raw){var o=JSON.parse(raw);if(o&&o.version===1&&Date.now()-o.seededAt<18*HOUR){S=o;return;}}}catch(e){}
+  S=seed();
+}
+function save(){try{localStorage.setItem(LS_KEY,JSON.stringify(S));}catch(e){}}
+load();
+
+/* ---------- consultas ---------- */
+function bal(id){return bal0(S,id==null?S.balanzaId:id);}
+function lugar(id){for(var i=0;i<S.lugares.length;i++)if(S.lugares[i].id===id)return S.lugares[i];return {id:id,nombre:id};}
+function byId(arr,id){id=Number(id);for(var i=0;i<arr.length;i++)if(arr[i].id===id)return arr[i];return null;}
+function tk(id){return byId(S.tickets,id);}
+function cliente(id){var c=byId(S.clientes,id);return c?c.razon:'-';}
+function producto(id){var p=byId(S.productos,id);return p?p.nombre:'-';}
+function buque(id){var b=byId(S.buques,id);return b?b.nombre+' (IMO '+b.imo+')':'-';}
+function buqueN(id){var b=byId(S.buques,id);return b?b.nombre:'-';}
+function ata(id){var a=byId(S.atas,id);return a?a.razon+', CUIT '+a.cuit:'-';}
+function chofer(dni){for(var i=0;i<S.choferes.length;i++)if(S.choferes[i].dni===String(dni))return S.choferes[i];return null;}
+function choferN(dni){var c=chofer(dni);return c?c.apellido+', '+c.nombre+' (DNI '+Number(c.dni).toLocaleString('es-AR')+')':'DNI '+dni;}
+function simDe(cid,pid){for(var i=0;i<S.documentos.length;i++){var d=S.documentos[i];if(d.clienteId===Number(cid)&&d.productoId===Number(pid))return d.sim;}return null;}
+function balLabel(id){var b=bal(id);return b.nombre+', '+lugar(b.lugar).nombre;}
+function ejesEval(ejes,bruto){
+  var max=S.reglas.ejes[ejes]||0, lim=Math.round(max*(1+S.reglas.tolerancia/100));
+  var pct=max?bruto/max*100:0;
+  return {max:max,lim:lim,pct:pct,estado:bruto>lim?'excede':(bruto>max?'tolerancia':'ok')};
+}
+function certEstado(c){var d=Math.ceil((c.hasta-Date.now())/DAY);if(d<0)return {d:d,txt:'Vencido',cls:'b-warn'};if(d<=30)return {d:d,txt:'Vence en '+d+' días',cls:'b-warn'};return {d:d,txt:'Vigente',cls:'b-info'};}
+
+function audit(accion,detalle,tid){
+  S.auditoria.unshift({ts:Date.now(),usuario:S.user?S.user.nombre:'Sistema',rol:S.user?S.user.rol:'',accion:accion,detalle:detalle,ticketId:tid||null});
+  save();
+}
+function toast(msg,kind){
+  var el=document.createElement('div');el.className='toast'+(kind==='warn'?' warn':'');el.textContent=msg;
+  $('#toasts').appendChild(el);setTimeout(function(){el.remove();},4200);
+}
+
+/* ---------- íconos ---------- */
+function ico(n,sz){
+  var p={
+    puesto:'<path d="M3 20h18"/><path d="M5 20V9h14v11"/><path d="M9 9V5h6v4"/>',
+    alert:'<path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17h.01"/>',
+    info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>',
+    x:'<path d="M6 6l12 12M18 6L6 18"/>',
+    clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'
+  }[n]||'';
+  sz=sz||18;
+  return '<svg width="'+sz+'" height="'+sz+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+p+'</svg>';
+}
+
+/* ---------- patente argentina ---------- */
+var FLAG='<svg width="10" height="6" viewBox="0 0 10 6" aria-hidden="true"><rect width="10" height="2" fill="#75AADB"/><rect y="2" width="10" height="2" fill="#FFFFFF"/><rect y="4" width="10" height="2" fill="#75AADB"/><circle cx="5" cy="3" r=".7" fill="#F6B40E"/></svg>';
+function plate(p){
+  if(!p)return '<span class="muted">-</span>';
+  return '<span class="plate" role="img" aria-label="Patente '+esc(p)+'"><span class="plate-band" aria-hidden="true"><span>REPÚBLICA ARGENTINA</span>'+FLAG+'</span><span class="plate-num" aria-hidden="true">'+esc(p)+'</span></span>';
+}
+function platesPair(t){return '<span class="plates"><span class="cap">Camión'+plate(t.patente)+'</span><span class="cap">Acoplado'+plate(t.acoplado)+'</span></span>';}
+var NOVIT_QR='<svg class="qr" viewBox="0 0 37 37" width="176" height="176" role="img" aria-label="Código QR con enlace a novitsoftware.com" shape-rendering="crispEdges"><rect width="37" height="37" fill="#fff"/><path fill="#111" d="M4 4h7v1h-7zM12 4h1v1h-1zM16 4h2v1h-2zM19 4h1v1h-1zM22 4h2v1h-2zM26 4h7v1h-7zM4 5h1v1h-1zM10 5h1v1h-1zM13 5h3v1h-3zM17 5h1v1h-1zM20 5h1v1h-1zM22 5h1v1h-1zM24 5h1v1h-1zM26 5h1v1h-1zM32 5h1v1h-1zM4 6h1v1h-1zM6 6h3v1h-3zM10 6h1v1h-1zM12 6h2v1h-2zM15 6h2v1h-2zM20 6h2v1h-2zM23 6h1v1h-1zM26 6h1v1h-1zM28 6h3v1h-3zM32 6h1v1h-1zM4 7h1v1h-1zM6 7h3v1h-3zM10 7h1v1h-1zM12 7h3v1h-3zM16 7h5v1h-5zM23 7h2v1h-2zM26 7h1v1h-1zM28 7h3v1h-3zM32 7h1v1h-1zM4 8h1v1h-1zM6 8h3v1h-3zM10 8h1v1h-1zM13 8h1v1h-1zM17 8h6v1h-6zM26 8h1v1h-1zM28 8h3v1h-3zM32 8h1v1h-1zM4 9h1v1h-1zM10 9h1v1h-1zM12 9h2v1h-2zM15 9h2v1h-2zM20 9h4v1h-4zM26 9h1v1h-1zM32 9h1v1h-1zM4 10h7v1h-7zM12 10h1v1h-1zM14 10h1v1h-1zM16 10h1v1h-1zM18 10h1v1h-1zM20 10h1v1h-1zM22 10h1v1h-1zM24 10h1v1h-1zM26 10h7v1h-7zM12 11h5v1h-5zM21 11h4v1h-4zM5 12h1v1h-1zM7 12h1v1h-1zM9 12h7v1h-7zM17 12h2v1h-2zM20 12h1v1h-1zM25 12h3v1h-3zM29 12h2v1h-2zM32 12h1v1h-1zM4 13h1v1h-1zM7 13h2v1h-2zM11 13h1v1h-1zM14 13h2v1h-2zM17 13h1v1h-1zM24 13h3v1h-3zM29 13h1v1h-1zM32 13h1v1h-1zM4 14h1v1h-1zM7 14h4v1h-4zM18 14h1v1h-1zM21 14h1v1h-1zM23 14h2v1h-2zM26 14h2v1h-2zM31 14h1v1h-1zM6 15h1v1h-1zM8 15h1v1h-1zM12 15h7v1h-7zM20 15h1v1h-1zM25 15h3v1h-3zM30 15h2v1h-2zM4 16h4v1h-4zM10 16h4v1h-4zM15 16h3v1h-3zM20 16h2v1h-2zM23 16h1v1h-1zM26 16h2v1h-2zM6 17h3v1h-3zM13 17h2v1h-2zM17 17h1v1h-1zM23 17h3v1h-3zM27 17h1v1h-1zM29 17h1v1h-1zM5 18h2v1h-2zM10 18h1v1h-1zM13 18h1v1h-1zM15 18h2v1h-2zM21 18h1v1h-1zM24 18h1v1h-1zM26 18h1v1h-1zM31 18h2v1h-2zM4 19h2v1h-2zM7 19h3v1h-3zM11 19h1v1h-1zM14 19h9v1h-9zM24 19h1v1h-1zM27 19h1v1h-1zM31 19h1v1h-1zM4 20h1v1h-1zM7 20h2v1h-2zM10 20h2v1h-2zM13 20h4v1h-4zM19 20h2v1h-2zM22 20h4v1h-4zM27 20h1v1h-1zM31 20h1v1h-1zM6 21h4v1h-4zM13 21h1v1h-1zM16 21h1v1h-1zM18 21h2v1h-2zM21 21h1v1h-1zM24 21h1v1h-1zM26 21h2v1h-2zM31 21h2v1h-2zM4 22h1v1h-1zM7 22h1v1h-1zM10 22h3v1h-3zM15 22h3v1h-3zM21 22h1v1h-1zM25 22h1v1h-1zM28 22h2v1h-2zM31 22h2v1h-2zM12 23h2v1h-2zM15 23h1v1h-1zM17 23h5v1h-5zM24 23h1v1h-1zM29 23h1v1h-1zM32 23h1v1h-1zM4 24h1v1h-1zM7 24h1v1h-1zM10 24h1v1h-1zM12 24h1v1h-1zM14 24h1v1h-1zM16 24h3v1h-3zM20 24h1v1h-1zM24 24h5v1h-5zM30 24h2v1h-2zM12 25h1v1h-1zM18 25h1v1h-1zM20 25h2v1h-2zM24 25h1v1h-1zM28 25h1v1h-1zM32 25h1v1h-1zM4 26h7v1h-7zM12 26h1v1h-1zM15 26h2v1h-2zM22 26h1v1h-1zM24 26h1v1h-1zM26 26h1v1h-1zM28 26h4v1h-4zM4 27h1v1h-1zM10 27h1v1h-1zM12 27h1v1h-1zM15 27h1v1h-1zM17 27h2v1h-2zM20 27h1v1h-1zM24 27h1v1h-1zM28 27h1v1h-1zM30 27h1v1h-1zM4 28h1v1h-1zM6 28h3v1h-3zM10 28h1v1h-1zM13 28h3v1h-3zM17 28h2v1h-2zM20 28h1v1h-1zM22 28h1v1h-1zM24 28h6v1h-6zM4 29h1v1h-1zM6 29h3v1h-3zM10 29h1v1h-1zM12 29h2v1h-2zM19 29h1v1h-1zM23 29h4v1h-4zM28 29h2v1h-2zM32 29h1v1h-1zM4 30h1v1h-1zM6 30h3v1h-3zM10 30h1v1h-1zM14 30h1v1h-1zM16 30h1v1h-1zM18 30h3v1h-3zM23 30h2v1h-2zM28 30h1v1h-1zM30 30h1v1h-1zM32 30h1v1h-1zM4 31h1v1h-1zM10 31h1v1h-1zM12 31h3v1h-3zM17 31h1v1h-1zM20 31h6v1h-6zM27 31h1v1h-1zM31 31h1v1h-1zM4 32h7v1h-7zM17 32h5v1h-5zM24 32h1v1h-1zM26 32h1v1h-1zM28 32h1v1h-1zM31 32h1v1h-1z"/></svg>';
+
+/* ---------- estado de interfaz (no persistente) ---------- */
+var UI={
+  modo:'nuevo', sel:null, captura:null, obs2:'', confirmExceso:false,
+  draft:null, pq:'', tf:{q:'',estado:'',lugar:'',producto:''}, af:{q:'',usuario:''}, pf:{lugar:'',cliente:'',periodo:'24h'}, syncing:false
+};
+function blankDraft(){return {tipo:'Carga',ot:'',buqueId:'',clienteId:'',productoId:'',ataId:'',patente:'',acoplado:'',ejes:'5',dni:'',apellido:'',nombre:'',control:false,obs:''};}
+UI.draft=blankDraft();
+
+/* ---------- simulación de balanza ---------- */
+var SC={valor:0,objetivo:0,estable:true,since:0};
+function tickScale(){
+  var reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var diff=SC.objetivo-SC.valor;
+  if(Math.abs(diff)>30){
+    SC.valor+= reduce?diff:diff*0.45+(Math.random()-0.5)*Math.min(160,Math.abs(diff)*0.25);
+    SC.estable=false;SC.since=0;
+  } else {
+    if(!SC.since)SC.since=Date.now();
+    if(Date.now()-SC.since>600||reduce){SC.valor=SC.objetivo;SC.estable=true;}
+    else{SC.valor=SC.objetivo+(Math.random()-0.5)*60;SC.estable=false;}
+  }
+  if(SC.valor<0)SC.valor=0;
+  updateLive();
+}
+setInterval(tickScale,130);
+function lectura(){return Math.max(0,r20(SC.valor));}
+
+/* ---------- ruteo y render ---------- */
+function route(){var h=location.hash.replace(/^#\/?/,'')||'puesto';var parts=h.split('/');return {v:parts[0],p:parts[1]||''};}
+window.addEventListener('hashchange',function(){render();});
+function render(){
+  var app=$('#app');
+  if(!S.user){app.innerHTML=viewLogin();var d=$('#simdock');if(d)d.remove();return;}
+  var r=route();
+  app.innerHTML=viewTop()+viewNav(r.v)+'<main class="main" id="main">'+viewMain(r)+'</main>';
+  renderDock(r.v);
+  updateLive();
+}
+function viewMain(r){
+  switch(r.v){
+    case 'tickets':return viewTickets();
+    case 'panel':return viewPanel();
+    case 'maestros':return viewMaestros(r.p||'clientes');
+    case 'reglas':return viewReglas();
+    case 'calibracion':return viewCal();
+    case 'auditoria':return viewAudit();
+    default:return viewPuesto();
+  }
+}
+function placeTxt(b){return lugar(b.lugar).nombre+' · '+b.nombre;}
+function turnoCorto(){var h=new Date().getHours();if(h>=6&&h<14)return 'Turno 6 a 14 h';if(h>=14&&h<22)return 'Turno 14 a 22 h';return 'Turno 22 a 6 h';}
+function rolCorto(){return {'Operador de balanza':'Operador','Supervisor de Operaciones':'Supervisor','Administrador':'Administrador'}[S.user.rol]||S.user.rol;}
+
+function viewLogin(){
+  var o=USERS.map(function(u){return '<option value="'+u.id+'">'+esc(u.nombre+', '+u.rol)+'</option>';}).join('');
+  var b=S.balanzas.map(function(x){return '<option value="'+x.id+'"'+(x.id===S.balanzaId?' selected':'')+'>'+esc(placeTxt(x))+'</option>';}).join('');
+  return '<div class="login"><form class="login-card card" id="login-form">'+
+    '<div class="lbrand">'+ico('puesto',24)+'<span>Gestión de Balanzas</span><small>CGPBB</small></div>'+
+    '<p class="muted">Demo navegable del sistema propuesto, con datos de ejemplo.</p>'+
+    '<label class="field"><span>Usuario</span><select id="lg-user">'+o+'</select></label>'+
+    '<label class="field"><span>Contraseña</span><input type="password" id="lg-pass" value="demo1234" autocomplete="off"></label>'+
+    '<label class="field"><span>Puesto de trabajo</span><select id="lg-bal">'+b+'</select></label>'+
+    '<button class="btn primary xl" type="submit" data-act="login">Ingresar</button>'+
+    '<p class="small muted">Cada perfil tiene permisos distintos: el operador pesa, el supervisor autoriza ingresos manuales y anulaciones, y el administrador gestiona datos maestros y reglas.</p>'+
+    '</form></div>';
+}
+function viewTop(){
+  var b=bal(),pill;
+  if(UI.syncing)pill='<span class="pill sync"><span class="dot"></span><span>Sincronizando</span></span>';
+  else if(b.online)pill='<span class="pill on"><span class="dot"></span><span>En línea · sincronizado '+hora(b.lastSync)+'</span></span>';
+  else pill='<span class="pill off"><span class="dot"></span><span>Modo local · '+b.pendSync+' por sincronizar</span></span>';
+  var opts=S.balanzas.map(function(x){return '<option value="'+x.id+'"'+(x.id===S.balanzaId?' selected':'')+'>'+esc(placeTxt(x))+'</option>';}).join('');
+  return '<header class="top"><div class="top-l">'+ico('puesto',22)+'<span class="brand">Gestión de Balanzas</span><span class="brand-sub">CGPBB</span><span class="sep"></span>'+
+    '<select class="place" data-bind="puesto" aria-label="Puesto de trabajo">'+opts+'</select></div>'+
+    '<div class="top-r">'+pill+'<span class="who">'+esc(rolCorto()+': '+S.user.nombre+' · '+turnoCorto())+'</span><button class="tbtn" data-act="logout">Cerrar sesión</button></div></header>';
+}
+function viewNav(v){
+  var items=[['puesto','Puesto de balanza'],['tickets','Tickets'],['panel','Panel de supervisión'],['maestros','Datos maestros'],['reglas','Reglas de pesaje'],['calibracion','Calibración'],['auditoria','Auditoría']];
+  return '<nav class="navbar" aria-label="Secciones"><div class="tabs2">'+items.map(function(it){return '<a href="#/'+it[0]+'"'+(v===it[0]?' aria-current="page"':'')+'>'+it[1]+'</a>';}).join('')+
+    '</div><button class="link" data-act="guia">Guía de la demo</button></nav>';
+}
+function renderDock(){var d=$('#simdock');if(d)d.remove();}
+function simSection(){
+  var b=bal();
+  return '<details class="simbox" open><summary>Simulador de la demo</summary><div class="inner"><p class="small muted">En el sistema real la lectura llega de la balanza. Acá la simulamos.</p>'+
+    '<div class="row"><button class="btn sm" data-act="sim-subir">Subir camión</button><button class="btn sm" data-act="sim-bajar">Retirar camión</button></div>'+
+    '<button class="btn sm" data-act="sim-conn">'+(b.online?'Simular corte de conectividad':'Restablecer conectividad')+'</button>'+
+    '<button class="link small" data-act="reset" style="align-self:flex-start;margin-top:2px">Reiniciar datos de ejemplo</button></div></details>';
+}
+
+/* ---------- puesto de balanza ---------- */
+function viewPuesto(){
+  var b=bal();var ce=certEstado(b.cert);
+  return '<div class="puesto">'+
+   '<div class="col">'+
+    '<section class="visor" aria-label="Lectura de balanza"><div class="vlabel">Lectura de balanza</div>'+
+      '<div class="vnum"><span id="visor-num">0</span><span class="vunit">kg</span></div>'+
+      '<div class="vfoot"><span class="vstate" id="visor-state"><i></i><span>Balanza vacía</span></span><span class="vconn">'+esc(b.marca+' · '+b.puerto+' · '+b.baudios+' bps')+'</span></div></section>'+
+    '<button class="btn primary xl" id="btn-capturar" data-act="capturar" disabled>'+capLabel()+'</button>'+
+    '<button class="btn outline" data-act="manual">Ingreso manual supervisado</button>'+
+    '<section class="card ejes-card" id="ejes-card">'+ejesCard()+'</section>'+
+    '<section class="card cert"><span class="muted">Certificado de calibración</span><b>'+(ce.d>30?'Vigente hasta '+fecha(b.cert.hasta):(ce.d<0?'Vencido':'Vence el '+fecha(b.cert.hasta)))+'</b></section>'+
+    simSection()+
+   '</div>'+
+   '<section class="card ticket" id="col-ticket">'+ticketView()+'</section>'+
+   '<aside class="col col-side">'+viewPendPanel()+viewAlertas()+'</aside>'+
+  '</div>';
+}
+function capLabel(){return UI.modo==='segundo'?'Capturar peso de salida':(UI.modo==='final'?'Capturar peso':'Capturar peso de entrada');}
+function ticketView(){var t=tk(UI.sel);if(UI.modo==='segundo'&&t)return viewSegundo(t,false);if(UI.modo==='final'&&t)return viewSegundo(t,true);return viewNuevo();}
+function opts(arr,val,label,ph){
+  return '<option value="">'+esc(ph||'Seleccioná')+'</option>'+arr.map(function(x){return '<option value="'+x.id+'"'+(String(x.id)===String(val)?' selected':'')+'>'+esc(label(x))+'</option>';}).join('');
+}
+function roField(label,val,hint,mono){return '<label class="field"><span>'+esc(label)+(hint?'<em>'+esc(hint)+'</em>':'')+'</span><input readonly value="'+esc(val)+'"'+(mono?' class="mono"':'')+'></label>';}
+function plateField(label,p){return '<div class="field"><span>'+esc(label)+'</span><div class="platebox">'+plate(p)+'</div></div>';}
+
+function viewNuevo(){
+  var d=UI.draft,b=bal();
+  var ejesOpts=[2,3,4,5,6].map(function(n){return '<option value="'+n+'"'+(String(n)===String(d.ejes)?' selected':'')+'>'+n+'</option>';}).join('');
+  return '<div class="tk-head"><div><h1>Nuevo ticket</h1><p>Primer pesaje en '+esc(placeTxt(b))+(S.parametros.lugarAutomatico?'. El lugar operativo se asigna según la balanza.':'')+'</p></div><span class="badge b-muted">Sin registrar</span></div>'+
+  '<div class="slabel">Operación</div><div class="g2">'+
+    '<label class="field"><span>Tipo de operación</span><select data-bind="d.tipo"><option'+(d.tipo==='Carga'?' selected':'')+'>Carga</option><option'+(d.tipo==='Descarga'?' selected':'')+'>Descarga</option></select></label>'+
+    '<label class="field"><span>Orden de trabajo<em>Opcional</em></span><input data-bind="d.ot" value="'+esc(d.ot)+'" placeholder="OT 2026-0000"></label>'+
+    '<label class="field"><span>Buque</span><select data-bind="d.buqueId">'+opts(S.buques,d.buqueId,function(x){return x.nombre+' · IMO '+x.imo;})+'</select></label>'+
+    '<label class="field"><span>Cliente</span><select data-bind="d.clienteId">'+opts(S.clientes,d.clienteId,function(x){return x.razon;})+'</select></label>'+
+    '<label class="field"><span>Producto</span><select data-bind="d.productoId">'+opts(S.productos,d.productoId,function(x){return x.nombre;})+'</select></label>'+
+    '<label class="field"><span>Documentación de aduana<em>Autocompletado</em></span><input id="sim-box" readonly value="'+esc(simTxt())+'"></label>'+
+    '<label class="field"><span>ATA</span><select data-bind="d.ataId">'+opts(S.atas,d.ataId,function(x){return x.razon+' · '+x.cuit;})+'</select></label>'+
+  '</div>'+
+  '<div class="slabel">Camión y chofer</div><div class="g4">'+
+    '<label class="field"><span>Patente camión</span><input data-bind="d.patente" value="'+esc(d.patente)+'" placeholder="AA 123 BB" autocomplete="off"></label>'+
+    '<label class="field"><span>Patente acoplado</span><input data-bind="d.acoplado" value="'+esc(d.acoplado)+'" placeholder="AA 123 BB" autocomplete="off"></label>'+
+    '<label class="field"><span>Cantidad de ejes</span><select data-bind="d.ejes">'+ejesOpts+'</select></label>'+
+    '<label class="field"><span>DNI del chofer</span><input data-bind="d.dni" value="'+esc(d.dni)+'" inputmode="numeric" placeholder="28415902" autocomplete="off"></label>'+
+  '</div><div id="plate-prev">'+platePrev()+'</div><div id="chofer-box">'+choferBox()+'</div>'+
+  '<label class="check"><input type="checkbox" data-bind="d.control"'+(d.control?' checked':'')+'> Pesada de control (permite registrar con peso cero)</label>'+
+  '<div class="slabel">Pesos</div><div class="weights" id="w-box">'+wNuevo()+'</div>'+
+  '<label class="field"><span>Observaciones</span><textarea data-bind="d.obs" rows="2">'+esc(d.obs)+'</textarea></label>'+
+  '<div class="tk-actions"><button class="btn" data-act="limpiar">Limpiar</button><div class="row"><span class="small muted" id="req-msg"></span><button class="btn primary" id="btn-registrar" data-act="registrar" disabled>Registrar primer pesaje</button></div></div>';
+}
+function platePrev(){var d=UI.draft;var a=normPat(d.patente),b=normPat(d.acoplado);if(!a&&!b)return '';return '<span class="plates">'+(a?'<span class="cap">Camión'+plate(a)+'</span>':'')+(b?'<span class="cap">Acoplado'+plate(b)+'</span>':'')+'</span>';}
+function simTxt(){var d=UI.draft;if(!d.clienteId||!d.productoId)return 'Elegí cliente y producto';var s=simDe(d.clienteId,d.productoId);return s?'SIM '+s:'Sin documentación configurada';}
+function choferBox(){
+  var d=UI.draft;if(!d.dni||d.dni.length<7)return '';
+  var c=chofer(d.dni);
+  if(c)return '<div class="note info">'+ico('info')+'<span>Chofer registrado: <b>'+esc(c.apellido+', '+c.nombre)+'</b></span></div>';
+  return '<div class="note warn" style="margin-bottom:10px">'+ico('alert')+'<span>DNI no registrado. Completá los datos y el chofer se da de alta al registrar el ticket.</span></div>'+
+   '<div class="g2"><label class="field"><span>Apellido</span><input data-bind="d.apellido" value="'+esc(d.apellido)+'"></label><label class="field"><span>Nombre</span><input data-bind="d.nombre" value="'+esc(d.nombre)+'"></label></div>';
+}
+function wNuevo(){
+  var c=UI.captura;
+  return (c?'<div class="wbox"><span class="lbl">Entrada · '+hora(c.ts)+(c.manual?' · manual':'')+'</span><span class="val">'+kg(c.peso)+' kg</span></div>'
+           :'<div class="wbox live"><span class="lbl">Entrada · lectura actual</span><span class="val">'+kg(lectura())+' kg</span></div>')+
+    '<div class="wbox"><span class="lbl">Salida</span><span class="soft">En el segundo pesaje</span></div>'+
+    '<div class="wbox net"><span class="lbl">Neto</span><span class="soft">Se calcula al cerrar</span></div>';
+}
+function missing(){
+  var d=UI.draft,m=[];
+  if(!d.buqueId)m.push('buque');if(!d.clienteId)m.push('cliente');if(!d.productoId)m.push('producto');
+  if(!normPat(d.patente))m.push('patente');if(!d.dni||d.dni.length<7)m.push('DNI');
+  else if(!chofer(d.dni)&&(!d.apellido||!d.nombre))m.push('datos del chofer');
+  if(!UI.captura)m.push('peso de entrada');
+  return m;
+}
+function updNuevo(){
+  var btn=$('#btn-registrar');if(!btn)return;
+  var m=missing();btn.disabled=m.length>0;
+  var msg=$('#req-msg');if(msg)msg.textContent=m.length?'Falta: '+m.join(', '):'';
+}
+function viewSegundo(t,fin){
+  var b=bal();var otra=t.balEnt!==b.id;
+  var head='<div class="tk-head"><div><h1>Ticket N.º '+num(t.id)+'</h1><p>Primer pesaje registrado a las '+hora(t.entrada.ts)+' · '+esc(placeTxt(bal(t.balEnt)))+(otra&&!fin?' · sincronizado desde otra balanza':'')+'</p></div>'+
+    (fin?(t.estado==='Anulado'?'<span class="badge b-warn">Anulado</span>':'<span class="badge b-info">Finalizado</span>'):'<span class="badge b-warn">Pendiente de segundo pesaje</span>')+'</div>';
+  var a=byId(S.atas,t.ataId);var bq=byId(S.buques,t.buqueId);var c=chofer(t.dni);
+  var body='<div class="slabel">Operación</div><div class="g2">'+
+     roField('Orden de trabajo',t.ot||'-')+roField('Buque',bq?bq.nombre+' · IMO '+bq.imo:'-')+
+     roField('Cliente',cliente(t.clienteId))+roField('Producto',producto(t.productoId))+
+     roField('Documentación de aduana','SIM '+t.sim,'Autocompletado')+roField('ATA',a?a.razon+' · '+a.cuit:'-')+
+    '</div><div class="slabel">Camión y chofer</div><div class="g4c">'+
+     plateField('Patente camión',t.patente)+plateField('Patente acoplado',t.acoplado)+roField('Cantidad de ejes',String(t.ejes))+
+     roField('Chofer',c?c.apellido+', '+c.nombre:'Sin registrar',c?'DNI '+Number(c.dni).toLocaleString('es-AR'):'DNI '+t.dni)+
+    '</div><div class="slabel">Pesos</div><div class="weights" id="w-box">'+wSegundo(t,fin)+'</div>'+
+    '<label class="field"><span>Observaciones</span><textarea data-bind="obs2" rows="2"'+(fin?' readonly':'')+'>'+esc(fin?(t.obs||''):UI.obs2)+'</textarea></label>'+
+    (fin?'':'<div id="exceso-box">'+excesoBox(t)+'</div>');
+  var canAn=t.estado!=='Anulado';
+  var act='<div class="tk-actions"><button class="btn warn" data-act="anular" data-id="'+t.id+'"'+(canAn?'':' disabled')+'>Anular ticket</button><div class="row">'+
+    '<button class="btn outline" data-act="imprimir" data-id="'+t.id+'"'+(fin&&t.estado==='Finalizado'?'':' disabled')+'>Imprimir</button>'+
+    '<button class="btn outline" data-act="enviar" data-id="'+t.id+'"'+(fin&&t.estado==='Finalizado'?'':' disabled')+'>Enviar comprobante</button>'+
+    (fin?'<button class="btn primary" data-act="nuevo">Nuevo ticket</button>':'<button class="btn primary" id="btn-cerrar" data-act="cerrar"'+(canCerrar(t)?'':' disabled')+'>Cerrar ticket</button>')+
+    '</div></div>';
+  return head+body+act;
+}
+function wSegundo(t,fin){
+  var cap=fin?t.salida:UI.captura;
+  var ent='<div class="wbox"><span class="lbl">'+(t.entrada.peso<=(cap?cap.peso:lectura())?'Entrada (tara)':'Entrada (bruto)')+' · '+hora(t.entrada.ts)+(t.entrada.manual?' · manual':'')+'</span><span class="val">'+kg(t.entrada.peso)+' kg</span></div>';
+  var sal=cap?'<div class="wbox"><span class="lbl">Salida · '+hora(cap.ts)+(cap.manual?' · manual':'')+'</span><span class="val">'+kg(cap.peso)+' kg</span></div>'
+             :'<div class="wbox live"><span class="lbl">Salida · lectura actual</span><span class="val">'+kg(lectura())+' kg</span></div>';
+  var net=cap?'<div class="wbox net"><span class="lbl">Neto</span><span class="val">'+kg(Math.abs(cap.peso-t.entrada.peso))+' kg</span></div>'
+             :'<div class="wbox net"><span class="lbl">Neto</span><span class="soft">Se calcula al capturar</span></div>';
+  return ent+sal+net;
+}
+function ejesCtx(){
+  var t=tk(UI.sel);
+  if(UI.modo==='final'&&t&&t.salida)return {ejes:t.ejes,bruto:Math.max(t.entrada.peso,t.salida.peso),cap:true};
+  if(UI.modo==='segundo'&&t){var s=UI.captura?UI.captura.peso:lectura();return {ejes:t.ejes,bruto:Math.max(t.entrada.peso,s),cap:!!UI.captura};}
+  return {ejes:Number(UI.draft.ejes)||5,bruto:UI.captura?UI.captura.peso:lectura(),cap:!!UI.captura};
+}
+function ejesCard(){
+  var c=ejesCtx(),ev=ejesEval(c.ejes,c.bruto);
+  var w=Math.min(100,c.bruto/ev.max*100);
+  var ax='';for(var i=1;i<=c.ejes;i++)ax+='<div class="axle"><span></span><small>E'+i+'</small></div>';
+  var badge=ev.estado==='excede'?'<span class="badge b-warn">Excede el máximo admisible</span>':(ev.estado==='tolerancia'?'<span class="badge b-info">Dentro de la tolerancia</span>':'<span class="badge b-info">Dentro del límite</span>');
+  return '<h2>Control por ejes</h2><div class="axles" aria-hidden="true">'+ax+'</div>'+
+    '<div class="kline"><span>'+c.ejes+' ejes · máximo admisible</span><b class="mono">'+kg(ev.max)+' kg</b></div>'+
+    '<div class="meter'+(ev.estado==='excede'?' over':'')+'"><span style="width:'+w.toFixed(1)+'%"></span></div>'+
+    '<div class="kline"><span>'+(c.cap?'Peso capturado':'Lectura actual')+': '+Math.round(ev.pct)+'% del máximo</span><span>Tolerancia '+S.reglas.tolerancia+'%</span></div>'+
+    '<div>'+badge+'</div>';
+}
+function excesoBox(t){
+  var c=UI.captura;if(!c)return '';
+  var ev=ejesEval(t.ejes,Math.max(t.entrada.peso,c.peso));
+  if(ev.estado!=='excede')return '';
+  return '<div class="note warn">'+ico('alert')+'<div class="stack" style="gap:8px"><span>El peso bruto supera el máximo admisible para '+t.ejes+' ejes, incluso con la tolerancia configurada. El ticket se puede cerrar, y el exceso queda registrado en la auditoría.</span>'+
+   '<label class="check"><input type="checkbox" data-bind="confirmExceso"'+(UI.confirmExceso?' checked':'')+'> Confirmo el cierre con exceso de peso</label></div></div>';
+}
+function canCerrar(t){
+  var c=UI.captura;if(!c)return false;
+  var ev=ejesEval(t.ejes,Math.max(t.entrada.peso,c.peso));
+  return ev.estado!=='excede'||UI.confirmExceso;
+}
+function pendList(){
+  var b=bal();var q=UI.pq.trim().toLowerCase();
+  return S.tickets.filter(function(t){return t.estado==='Pendiente'&&t.lugar===b.lugar;}).filter(function(t){
+    if(!q)return true;
+    var hay=[t.patente,t.acoplado,t.patente.replace(/ /g,''),num(t.id),String(t.id),buqueN(t.buqueId),fecha(t.entrada.ts),cliente(t.clienteId)].join(' ').toLowerCase();
+    return hay.indexOf(q)>=0;
+  }).sort(function(a,b2){return a.entrada.ts-b2.entrada.ts;});
+}
+function viewPendPanel(){
+  var n=S.tickets.filter(function(t){return t.estado==='Pendiente'&&t.lugar===bal().lugar;}).length;
+  return '<section class="card pad stack" style="gap:12px"><div class="row between" style="flex-wrap:nowrap"><h2>Pendientes de segundo pesaje</h2><span class="badge b-muted" id="pend-n">'+n+'</span></div>'+
+   '<label class="field"><span>Buscar</span><input type="search" data-bind="pq" value="'+esc(UI.pq)+'" placeholder="Patente, ticket, buque o fecha"></label>'+
+   '<div class="plist" id="plist">'+pendItems()+'</div>'+
+   '<button class="btn outline" data-act="nuevo">Nuevo ticket</button></section>';
+}
+function pendItems(){
+  var l=pendList();if(!l.length)return '<p class="empty small">'+(UI.pq?'No hay pendientes que coincidan con la búsqueda.':'No hay camiones pendientes de segundo pesaje.')+'</p>';
+  return l.map(function(t){
+    var on=(UI.modo==='segundo')&&UI.sel===t.id;
+    return '<button class="pitem" data-act="sel" data-id="'+t.id+'" aria-pressed="'+on+'"><span class="l">'+plate(t.patente)+'<span class="sub">'+esc(buqueN(t.buqueId))+'</span></span><span class="t">Ingreso '+hora(t.entrada.ts)+(t.balEnt!==S.balanzaId?'<br><span class="small">'+esc(bal(t.balEnt).nombre)+'</span>':'')+'</span></button>';
+  }).join('');
+}
+function viewAlertas(){
+  var al=[];
+  S.balanzas.forEach(function(b){
+    if(!b.online)al.push(['alert',esc(b.nombre+' · '+lugar(b.lugar).nombre)+' operando en modo local. '+b.pendSync+' '+(b.pendSync===1?'pesada pendiente':'pesadas pendientes')+' de sincronizar.']);
+    var ce=certEstado(b.cert);if(ce.d<=30)al.push(['clock','El certificado de calibración de '+esc(b.nombre)+' '+(ce.d<0?'está vencido.':'vence el '+fecha(b.cert.hasta)+'.')]);
+  });
+  var viejos=S.tickets.filter(function(t){return t.estado==='Pendiente'&&Date.now()-t.entrada.ts>3*HOUR;});
+  if(viejos.length)al.push(['alert',viejos.length+' tickets llevan más de 3 horas sin segundo pesaje.']);
+  return '<section class="card pad stack" style="gap:10px"><h2>Alertas</h2>'+(al.length?al.map(function(a){return '<div class="note warn">'+ico(a[0])+'<span>'+a[1]+'</span></div>';}).join(''):'<p class="small muted">Sin alertas.</p>')+'</section>';
+}
+
+/* ---------- actualización en vivo ---------- */
+function setHTML(el,h){if(el&&el.innerHTML!==h)el.innerHTML=h;}
+function updateLive(){
+  var n=$('#visor-num');if(!n)return;
+  var v=lectura();n.textContent=kg(v);
+  var st=$('#visor-state');
+  if(st){var cls='vstate',txt;if(v<20&&SC.estable)txt='Balanza vacía';else if(SC.estable){cls+=' stable';txt='Estable';}else{cls+=' moving';txt='Estabilizando';}st.className=cls;st.lastChild.textContent=txt;}
+  var btn=$('#btn-capturar');
+  if(btn){btn.disabled=!(UI.modo!=='final'&&SC.estable&&(v>=S.reglas.pesoMinimo||(UI.modo==='nuevo'&&UI.draft.control)));}
+  setHTML($('#ejes-card'),ejesCard());
+  var t=tk(UI.sel);
+  if(UI.modo==='segundo'&&t&&!UI.captura)setHTML($('#w-box'),wSegundo(t,false));
+  if(UI.modo==='nuevo'){if(!UI.captura)setHTML($('#w-box'),wNuevo());updNuevo();}
+}
+function renderTicketCol(){
+  var col=$('#col-ticket');if(!col){render();return;}
+  var ae=document.activeElement;var bind=ae&&ae.getAttribute?ae.getAttribute('data-bind'):null;
+  col.innerHTML=ticketView();
+  var cb=$('#btn-capturar');if(cb)cb.textContent=capLabel();
+  var pl=$('#plist');if(pl)pl.innerHTML=pendItems();
+  var pn=$('#pend-n');if(pn)pn.textContent=S.tickets.filter(function(x){return x.estado==='Pendiente'&&x.lugar===bal().lugar;}).length;
+  if(bind){var el=col.querySelector('[data-bind="'+bind+'"]');if(el)el.focus();}
+  updateLive();
+}
+
+/* ---------- acciones del puesto ---------- */
+function capturar(){
+  var v=lectura();
+  UI.captura={peso:v,ts:Date.now(),manual:false};UI.confirmExceso=false;
+  toast('Peso capturado: '+kg(v)+' kg');renderTicketCol();
+}
+function registrar(){
+  var d=UI.draft,b=bal();if(missing().length)return;
+  if(!chofer(d.dni)){S.choferes.push({dni:String(d.dni),tipo:'DNI',apellido:d.apellido.trim(),nombre:d.nombre.trim()});audit('Alta de chofer',d.apellido.trim()+', '+d.nombre.trim()+', DNI '+d.dni);}
+  var c=UI.captura;var sim=simDe(d.clienteId,d.productoId)||'Sin documentación';var neto=r20(25000+Math.random()*6000);
+  var t={id:S.seq++,lugar:b.lugar,balEnt:b.id,balSal:null,tipo:d.tipo,ot:d.ot.trim(),buqueId:Number(d.buqueId),clienteId:Number(d.clienteId),productoId:Number(d.productoId),
+    sim:sim,ataId:d.ataId?Number(d.ataId):null,patente:normPat(d.patente),acoplado:normPat(d.acoplado),ejes:Number(d.ejes),dni:String(d.dni),obs:d.obs.trim(),control:d.control,
+    entrada:{peso:c.peso,ts:c.ts,manual:!!c.manual,autoriza:c.autoriza||null},salida:null,neto:null,estado:'Pendiente',sync:b.online,excedido:false,
+    simSalida:d.tipo==='Carga'?c.peso+neto:Math.max(9000,c.peso-neto)};
+  if(d.control&&c.peso===0)t.simSalida=r20(14000+Math.random()*2000);
+  if(!b.online)b.pendSync++;
+  S.tickets.push(t);
+  audit('Primer pesaje registrado','Ticket '+num(t.id)+', patente '+t.patente+', '+kg(c.peso)+' kg'+(c.manual?' (ingreso manual autorizado por '+c.autoriza+')':''),t.id);
+  UI.draft=blankDraft();UI.captura=null;save();
+  toast('Ticket '+num(t.id)+' registrado. Queda pendiente de segundo pesaje.');
+  SC.objetivo=0;render();
+}
+function seleccionar(id){SC.objetivo=0;UI.modo='segundo';UI.sel=Number(id);UI.captura=null;UI.obs2='';UI.confirmExceso=false;renderTicketCol();}
+function cerrar(){
+  var t=tk(UI.sel),c=UI.captura,b=bal();if(!t||!c||!canCerrar(t))return;
+  t.salida={peso:c.peso,ts:c.ts,manual:!!c.manual,autoriza:c.autoriza||null};t.balSal=b.id;
+  t.neto=Math.abs(c.peso-t.entrada.peso);
+  var ev=ejesEval(t.ejes,Math.max(t.entrada.peso,c.peso));t.excedido=ev.estado==='excede';
+  t.estado='Finalizado';if(UI.obs2.trim())t.obs=UI.obs2.trim();
+  t.sync=b.online;if(!b.online)b.pendSync++;
+  audit('Ticket cerrado','Ticket '+num(t.id)+', neto '+kg(t.neto)+' kg'+(c.manual?' (salida manual autorizada por '+c.autoriza+')':''),t.id);
+  if(t.excedido)audit('Cierre con exceso de peso por ejes','Ticket '+num(t.id)+': bruto '+kg(Math.max(t.entrada.peso,c.peso))+' kg, límite '+kg(ev.lim)+' kg para '+t.ejes+' ejes',t.id);
+  UI.modo='final';UI.captura=null;UI.obs2='';UI.confirmExceso=false;save();
+  SC.objetivo=0;
+  render();openComprobante(t.id);
+  if(S.parametros.envioAutomatico)toast('Comprobante enviado por correo a los destinatarios configurados.');
+}
+function simSubir(){
+  if(UI.modo==='final'){toast('Iniciá un nuevo ticket o elegí un pendiente para pesar otro camión.');return;}
+  if(UI.modo==='segundo'){var t=tk(UI.sel);SC.objetivo=t&&t.simSalida?t.simSalida:r20(40000+Math.random()*5000);}
+  else if(UI.draft.control){SC.objetivo=0;toast('Pesada de control: la balanza queda en cero.');}
+  else SC.objetivo=UI.draft.tipo==='Descarga'?r20(38000+Math.random()*6000):r20(13500+Math.random()*2500);
+}
+function toggleConn(){
+  var b=bal();
+  if(b.online){b.online=false;audit('Conectividad perdida',b.nombre+' pasa a operar en modo local');save();toast(b.nombre+' opera en modo local. Los registros se guardan en el puesto.','warn');render();return;}
+  UI.syncing=true;render();
+  setTimeout(function(){
+    var n=b.pendSync;b.online=true;b.pendSync=0;b.lastSync=Date.now();UI.syncing=false;
+    S.tickets.forEach(function(t){if(!t.sync&&(t.balEnt===b.id||t.balSal===b.id))t.sync=true;});
+    audit('Sincronización completada',b.nombre+': '+n+' registros enviados al repositorio central');save();
+    toast('Sincronización completada: '+n+' '+(n===1?'registro enviado':'registros enviados')+' al repositorio central.');render();
+  },1600);
+}
+
+/* ---------- diálogos ---------- */
+function openDialog(html,cls,onMount){
+  var dlg=document.createElement('dialog');if(cls)dlg.className=cls;dlg.innerHTML=html;document.body.appendChild(dlg);
+  dlg.addEventListener('close',function(){dlg.remove();});
+  dlg.addEventListener('click',function(e){if(e.target===dlg)dlg.close();var c=e.target.closest('[data-close]');if(c)dlg.close();});
+  dlg.showModal();if(onMount)onMount(dlg);return dlg;
+}
+function dlgHead(t){return '<div class="dlg-h"><h2>'+t+'</h2><button class="xbtn" data-close aria-label="Cerrar">'+ico('x')+'</button></div>';}
+function openManual(){
+  if(UI.modo==='final'){toast('El ticket ya está cerrado. Iniciá uno nuevo para registrar otro peso.');return;}
+  var t=UI.modo==='segundo'?tk(UI.sel):null;
+  var sups=USERS.filter(function(u){return u.rol!=='Operador de balanza';});
+  openDialog(dlgHead('Ingreso manual supervisado')+
+   '<div class="dlg-b"><p class="small muted">Solo ante una contingencia. El peso ingresado y la autorización quedan registrados en la auditoría.</p>'+
+   '<label class="field"><span>'+(t?'Peso de salida':'Peso de entrada')+' (kg)</span><input type="number" id="m-peso" min="0" step="20" inputmode="numeric" placeholder="42780"></label>'+
+   '<label class="field"><span>Motivo</span><select id="m-motivo"><option>Falla de comunicación con la balanza</option><option>Balanza fuera de servicio</option><option>Otro</option></select></label>'+
+   '<div class="g2"><label class="field"><span>Autoriza</span><select id="m-sup">'+sups.map(function(u){return '<option value="'+u.id+'">'+esc(u.nombre)+'</option>';}).join('')+'</select></label>'+
+   '<label class="field"><span>Contraseña del supervisor</span><input type="password" id="m-pass" autocomplete="off"></label></div>'+
+   '<p class="small" id="m-err" style="color:var(--warn)"></p></div>'+
+   '<div class="dlg-f"><button class="btn" data-close>Cancelar</button><button class="btn primary" id="m-ok">Registrar peso manual</button></div>','narrow',function(dlg){
+     $('#m-ok',dlg).addEventListener('click',function(){
+       var raw=$('#m-peso',dlg).value,p=Number(raw),pass=$('#m-pass',dlg).value;
+       if(raw===''||!(p>=0)){$('#m-err',dlg).textContent='Ingresá el peso en kilogramos.';return;}
+       if(!pass){$('#m-err',dlg).textContent='El supervisor tiene que ingresar su contraseña para autorizar.';return;}
+       var sup=USERS.filter(function(u){return u.id===$('#m-sup',dlg).value;})[0];
+       UI.captura={peso:r20(p),ts:Date.now(),manual:true,autoriza:sup.nombre,motivo:$('#m-motivo',dlg).value};UI.confirmExceso=false;
+       audit('Ingreso manual supervisado',kg(r20(p))+' kg. Motivo: '+$('#m-motivo',dlg).value+'. Autorizó '+sup.nombre,t?t.id:null);
+       dlg.close();toast('Peso manual registrado: '+kg(r20(p))+' kg, autorizado por '+sup.nombre+'.');renderTicketCol();
+     });
+   });
+}
+function openAnular(id){
+  var t=tk(id);if(!t)return;
+  if(t.estado==='Finalizado'&&!isSup()){toast('Solo un supervisor o un administrador puede anular un ticket finalizado.','warn');return;}
+  openDialog(dlgHead('Anular ticket N.º '+num(t.id))+
+   '<div class="dlg-b"><p class="small muted">La anulación es lógica: el ticket se conserva con su historial y queda marcado como anulado.</p>'+
+   '<label class="field"><span>Motivo de anulación</span><select id="a-mot">'+S.motivos.map(function(m){return '<option>'+esc(m.texto)+'</option>';}).join('')+'</select></label>'+
+   '<label class="field"><span>Detalle<em>Opcional</em></span><textarea id="a-det" rows="2"></textarea></label></div>'+
+   '<div class="dlg-f"><button class="btn" data-close>Cancelar</button><button class="btn warn" id="a-ok">Anular ticket</button></div>','narrow',function(dlg){
+     $('#a-ok',dlg).addEventListener('click',function(){
+       var mot=$('#a-mot',dlg).value,det=$('#a-det',dlg).value.trim();
+       t.estado='Anulado';t.motivo=mot+(det?': '+det:'');t.anulacion={ts:Date.now(),usuario:S.user.nombre};
+       audit('Ticket anulado','Ticket '+num(t.id)+'. Motivo: '+t.motivo,t.id);
+       if(UI.sel===t.id){UI.modo='nuevo';UI.sel=null;UI.captura=null;}
+       save();$$('dialog').forEach(function(d){d.close();});toast('Ticket '+num(t.id)+' anulado.');render();
+     });
+   });
+}
+function drow(k,v){return '<div class="drow"><span>'+esc(k)+'</span><span>'+v+'</span></div>';}
+function openComprobante(id,imprimir){
+  var t=tk(id);if(!t||!t.salida)return;
+  openDialog(dlgHead('Comprobante digital')+
+   '<div class="comp print-area">'+
+    '<div><div class="slabel">CGPBB · Gestión de Balanzas</div><h1 style="margin-top:2px">Comprobante de pesaje</h1></div>'+
+    '<section class="card qcard"><div class="row between" style="width:100%"><span class="mono" style="font-weight:600">Ticket N.º '+num(t.id)+'</span><span class="badge b-info">Finalizado</span></div>'+
+      '<div class="qrbox">'+NOVIT_QR+'</div><span class="small muted" style="text-align:center">Escaneá el código para validar este comprobante.</span></section>'+
+    '<section class="card dcard">'+
+      drow('Fecha',esc(fecha(t.salida.ts)))+drow('Lugar',esc(placeTxt(bal(t.balSal||t.balEnt))))+
+      drow('Patentes',platesPair(t))+drow('Buque',esc(buque(t.buqueId)))+drow('Cliente',esc(cliente(t.clienteId)))+
+      drow('Producto',esc(producto(t.productoId)))+drow('Aduana','<span class="mono">SIM '+esc(t.sim)+'</span>')+drow('Chofer',esc(choferN(t.dni)))+
+    '</section>'+
+    '<div class="w3"><div class="card"><small>Entrada</small><b>'+kg(t.entrada.peso)+' kg</b></div><div class="card"><small>Salida</small><b>'+kg(t.salida.peso)+' kg</b></div><div class="net"><small>Neto</small><b>'+kg(t.neto)+' kg</b></div></div>'+
+    (t.excedido?'<div class="note warn">'+ico('alert')+'<span>Cerrado con exceso de peso por ejes. Registrado en auditoría.</span></div>':'')+
+   '</div>'+
+   '<div class="dlg-f"><button class="btn outline" id="c-mail">Compartir</button><button class="btn primary" id="c-pdf">Descargar PDF</button></div>','narrow',function(dlg){
+     $('#c-pdf',dlg).addEventListener('click',function(){audit('Comprobante descargado','Ticket '+num(t.id),t.id);try{window.print();}catch(e){}});
+     $('#c-mail',dlg).addEventListener('click',function(){openMail(t);});
+     if(imprimir)setTimeout(function(){try{window.print();}catch(e){}},300);
+   });
+}
+function openMail(t){
+  openDialog(dlgHead('Enviar comprobante')+
+   '<div class="dlg-b"><label class="field"><span>Destinatarios</span><input type="email" id="e-to" multiple value="operaciones@cliente.com.ar, aduana@agencia.com.ar"></label><p class="small muted">En la demo el envío se simula.</p></div>'+
+   '<div class="dlg-f"><button class="btn" data-close>Cancelar</button><button class="btn primary" id="e-ok">Enviar comprobante</button></div>','narrow',function(dlg){
+     $('#e-ok',dlg).addEventListener('click',function(){var to=$('#e-to',dlg).value.trim();if(!to)return;audit('Comprobante enviado por correo','Ticket '+num(t.id)+' a '+to,t.id);dlg.close();toast('Comprobante enviado a '+to+'.');});
+   });
+}
+function kvi(k,v){return '<div><dt>'+esc(k)+'</dt><dd>'+esc(v)+'</dd></div>';}
+function kvh(k,h){return '<div><dt>'+esc(k)+'</dt><dd>'+h+'</dd></div>';}
+function openTicket(id){
+  var t=tk(id);if(!t)return;
+  var hist=S.auditoria.filter(function(a){return a.ticketId===t.id;});
+  var badge=t.estado==='Finalizado'?'<span class="badge b-info">Finalizado</span>':(t.estado==='Anulado'?'<span class="badge b-warn">Anulado</span>':'<span class="badge b-warn">Pendiente de segundo pesaje</span>');
+  openDialog(dlgHead('Ticket N.º '+num(t.id))+
+   '<div class="dlg-b"><div class="row">'+badge+(t.sync?'':'<span class="badge b-warn">Pendiente de sincronizar</span>')+(t.excedido?'<span class="badge b-warn">Exceso por ejes</span>':'')+'</div>'+
+   platesPair(t)+
+   '<dl class="kv">'+kvi('Lugar operativo',lugar(t.lugar).nombre)+kvi('Balanza de entrada',bal(t.balEnt).nombre)+kvi('Balanza de salida',t.balSal?bal(t.balSal).nombre:'-')+
+    kvi('Orden de trabajo',t.ot||'-')+kvi('Buque',buque(t.buqueId))+kvi('Operación',t.tipo)+
+    kvi('Cliente',cliente(t.clienteId))+kvi('Producto',producto(t.productoId))+kvi('Documentación de aduana','SIM '+t.sim)+
+    kvi('ATA',ata(t.ataId))+kvi('Cantidad de ejes',t.ejes)+kvi('Chofer',choferN(t.dni))+
+    kvi('Entrada',kg(t.entrada.peso)+' kg, '+fh(t.entrada.ts)+(t.entrada.manual?' (manual)':''))+kvi('Salida',t.salida?kg(t.salida.peso)+' kg, '+fh(t.salida.ts)+(t.salida.manual?' (manual)':''):'-')+
+    kvi('Neto',t.neto!=null?kg(t.neto)+' kg':'-')+kvi('Motivo de anulación',t.motivo||'-')+kvi('Observaciones',t.obs||'-')+
+   '</dl><div><h2 style="margin-bottom:8px">Historial</h2><div class="tblwrap"><table class="tbl"><thead><tr><th>Fecha y hora</th><th>Usuario</th><th>Acción</th><th>Detalle</th></tr></thead><tbody>'+
+   hist.map(function(a){return '<tr><td style="white-space:nowrap">'+fh(a.ts)+'</td><td>'+esc(a.usuario)+'</td><td>'+esc(a.accion)+'</td><td>'+esc(a.detalle)+'</td></tr>';}).join('')+
+   '</tbody></table></div></div></div>'+
+   '<div class="dlg-f">'+(t.estado!=='Anulado'?'<button class="btn warn" id="t-anular">Anular ticket</button>':'')+(t.estado==='Finalizado'?'<button class="btn primary" id="t-comp">Ver comprobante</button>':'')+
+   (t.estado==='Pendiente'?'<button class="btn primary" id="t-seg">Ir al segundo pesaje</button>':'')+'<button class="btn" data-close>Cerrar</button></div>','wide',function(dlg){
+     var a=$('#t-anular',dlg);if(a)a.addEventListener('click',function(){openAnular(t.id);});
+     var c=$('#t-comp',dlg);if(c)c.addEventListener('click',function(){openComprobante(t.id);});
+     var s2=$('#t-seg',dlg);if(s2)s2.addEventListener('click',function(){
+       if(bal().lugar!==t.lugar){var bb=S.balanzas.filter(function(x){return x.lugar===t.lugar;})[0];S.balanzaId=bb.id;save();}
+       dlg.close();UI.modo='segundo';UI.sel=t.id;UI.captura=null;UI.obs2='';location.hash='#/puesto';render();
+     });
+   });
+}
+function openGuia(){
+  openDialog(dlgHead('Guía de la demo')+
+   '<div class="dlg-b"><p class="small muted">Un recorrido de cinco minutos por las funciones principales.</p><ol class="steps">'+
+   '<li>En <b>Pendientes de segundo pesaje</b>, elegí el camión <b>AE 123 KL</b>. Su primer pesaje se hizo en la Balanza 1 y aparece acá sincronizado.</li>'+
+   '<li>En el <b>Simulador de la demo</b> (abajo a la izquierda), tocá <b>Subir camión a la balanza</b>. Cuando la lectura se estabilice, <b>capturá el peso de salida</b>: el sistema calcula el neto y controla el peso por ejes.</li>'+
+   '<li><b>Cerrá el ticket</b> para ver el comprobante digital con su código QR, listo para descargar o compartir.</li>'+
+   '<li>Repetí con <b>AF 330 GH</b>: el peso supera el máximo para 5 ejes y el sistema pide confirmar el cierre.</li>'+
+   '<li>Tocá <b>Simular corte de conectividad</b>, registrá un ticket nuevo y restablecé la conexión para ver la sincronización.</li>'+
+   '<li>Revisá el <b>Panel de supervisión</b>, la búsqueda de <b>Tickets</b> y la <b>Auditoría</b>. Entrá como administrador para editar datos maestros y reglas.</li>'+
+   '</ol></div><div class="dlg-f"><button class="btn primary" data-close>Empezar</button></div>');
+}
+/* ---------- tickets ---------- */
+function viewTickets(){
+  var f=UI.tf;
+  return '<div class="page-head"><div><h1>Tickets</h1><p class="muted small">Consulta de operaciones en curso e históricas de todas las balanzas.</p></div><button class="btn outline" data-act="exportar">Exportar a Excel</button></div>'+
+  '<section class="panel pad" style="margin-bottom:14px"><div class="g4">'+
+   '<label class="field"><span>Buscar</span><input type="search" data-bind="tf.q" value="'+esc(f.q)+'" placeholder="Patente, ticket, buque o cliente"></label>'+
+   '<label class="field"><span>Estado</span><select data-bind="tf.estado"><option value="">Todos</option>'+['Pendiente','Finalizado','Anulado'].map(function(x){return '<option'+(f.estado===x?' selected':'')+'>'+x+'</option>';}).join('')+'</select></label>'+
+   '<label class="field"><span>Lugar operativo</span><select data-bind="tf.lugar"><option value="">Todos</option>'+S.lugares.map(function(l){return '<option value="'+l.id+'"'+(f.lugar===l.id?' selected':'')+'>'+esc(l.nombre)+'</option>';}).join('')+'</select></label>'+
+   '<label class="field"><span>Producto</span><select data-bind="tf.producto">'+opts(S.productos,f.producto,function(x){return x.nombre;},'Todos')+'</select></label>'+
+  '</div></section><section class="panel"><div class="tblwrap" id="tk-table">'+ticketsTable()+'</div></section>';
+}
+function ticketsTable(){
+  var f=UI.tf,q=f.q.trim().toLowerCase();
+  var l=S.tickets.filter(function(t){
+    if(f.estado&&t.estado!==f.estado)return false;if(f.lugar&&t.lugar!==f.lugar)return false;if(f.producto&&String(t.productoId)!==String(f.producto))return false;
+    if(q){var hay=[t.patente,t.acoplado,num(t.id),buqueN(t.buqueId),cliente(t.clienteId),t.ot].join(' ').toLowerCase();if(hay.indexOf(q)<0)return false;}
+    return true;
+  }).sort(function(a,b){return b.entrada.ts-a.entrada.ts;});
+  if(!l.length)return '<p class="empty">No hay tickets con esos filtros. Probá quitando alguno.</p>';
+  return '<table class="tbl"><thead><tr><th>Ticket</th><th>Entrada</th><th>Salida</th><th>Balanza</th><th>Patente</th><th>Buque</th><th>Cliente</th><th>Producto</th><th class="r">Neto (kg)</th><th>Estado</th></tr></thead><tbody>'+
+   l.map(function(t){
+     var est=t.estado==='Finalizado'?'<span class="badge b-info">Finalizado</span>':(t.estado==='Anulado'?'<span class="badge b-warn">Anulado</span>':'<span class="badge b-muted">Pendiente</span>');
+     if(!t.sync)est+=' <span class="badge b-warn">Sin sincronizar</span>';
+     if(t.excedido)est+=' <span class="badge b-warn">Exceso por ejes</span>';
+     return '<tr><td><button class="link mono" data-act="ticket" data-id="'+t.id+'">'+num(t.id)+'</button></td><td>'+fh(t.entrada.ts)+'</td><td>'+(t.salida?hora(t.salida.ts):'-')+'</td><td>'+esc(bal(t.balSal||t.balEnt).nombre)+'</td><td>'+plate(t.patente)+'</td><td>'+esc(buqueN(t.buqueId))+'</td><td>'+esc(cliente(t.clienteId))+'</td><td>'+esc(producto(t.productoId))+'</td><td class="r">'+(t.neto!=null?kg(t.neto):'-')+'</td><td>'+est+'</td></tr>';
+   }).join('')+'</tbody></table>';
+}
+
+/* ---------- datos maestros ---------- */
+var ENT={
+  clientes:{t:'Clientes',key:'id',cols:[['razon','Razón social'],['cuit','CUIT'],['idErp','ID ERP']]},
+  productos:{t:'Productos',key:'id',cols:[['nombre','Producto'],['idErp','ID ERP']]},
+  buques:{t:'Buques',key:'id',cols:[['nombre','Buque'],['imo','IMO']]},
+  atas:{t:'ATA',key:'id',cols:[['razon','Razón social'],['cuit','CUIT']]},
+  choferes:{t:'Choferes',key:'dni',cols:[['apellido','Apellido'],['nombre','Nombre'],['tipo','Tipo de documento'],['dni','Número de documento']]},
+  documentos:{t:'Documentación de aduana',key:'id',cols:[['clienteId','Cliente','cliente'],['productoId','Producto','producto'],['sim','Documentación (SIM)']]},
+  lugares:{t:'Lugares operativos',key:'id',cols:[['id','Código'],['nombre','Lugar operativo']]},
+  balanzas:{t:'Balanzas',key:'id',cols:[['nombre','Balanza'],['lugar','Lugar operativo','lugar'],['marca','Marca'],['puerto','Puerto serie'],['baudios','Velocidad (bps)']]},
+  motivos:{t:'Motivos de anulación',key:'id',cols:[['texto','Motivo']]}
+};
+function cellVal(ent,col,row){
+  var v=row[col[0]];
+  if(col[2]==='cliente')return cliente(v);if(col[2]==='producto')return producto(v);if(col[2]==='lugar')return lugar(v).nombre;
+  return v;
+}
+function viewMaestros(sub){
+  if(!ENT[sub])sub='clientes';var e=ENT[sub];var rows=S[sub];
+  return '<div class="page-head"><div><h1>Datos maestros</h1><p class="muted small">'+(isAdmin()?'Altas y modificaciones sin intervención de Sistemas. Cada cambio queda en la auditoría.':'Solo lectura. Las altas y modificaciones las realiza un administrador.')+'</p></div>'+
+   (isAdmin()?'<button class="btn primary" data-act="m-add" data-ent="'+sub+'">Agregar</button>':'')+'</div>'+
+   '<nav class="tabs" aria-label="Entidades">'+Object.keys(ENT).map(function(k){return '<a href="#/maestros/'+k+'"'+(k===sub?' aria-current="page"':'')+'>'+ENT[k].t+'</a>';}).join('')+'</nav>'+
+   '<section class="panel"><div class="tblwrap"><table class="tbl"><thead><tr>'+e.cols.map(function(c){return '<th>'+c[1]+'</th>';}).join('')+(isAdmin()?'<th class="r">Acciones</th>':'')+'</tr></thead><tbody>'+
+   rows.map(function(r){return '<tr>'+e.cols.map(function(c){return '<td>'+esc(cellVal(e,c,r))+'</td>';}).join('')+(isAdmin()?'<td class="r"><button class="link" data-act="m-edit" data-ent="'+sub+'" data-id="'+esc(r[e.key])+'">Editar</button></td>':'')+'</tr>';}).join('')+
+   '</tbody></table></div></section>';
+}
+function openMaestro(sub,id){
+  var e=ENT[sub],arr=S[sub],row=null,i;
+  if(id!=null){for(i=0;i<arr.length;i++)if(String(arr[i][e.key])===String(id))row=arr[i];}
+  var fields=e.cols.map(function(c){
+    var v=row?row[c[0]]:'';var nm='f-'+c[0];
+    if(c[2]==='cliente')return '<label class="field"><span>'+c[1]+'</span><select id="'+nm+'">'+opts(S.clientes,v,function(x){return x.razon;})+'</select></label>';
+    if(c[2]==='producto')return '<label class="field"><span>'+c[1]+'</span><select id="'+nm+'">'+opts(S.productos,v,function(x){return x.nombre;})+'</select></label>';
+    if(c[2]==='lugar')return '<label class="field"><span>'+c[1]+'</span><select id="'+nm+'">'+S.lugares.map(function(l){return '<option value="'+l.id+'"'+(l.id===v?' selected':'')+'>'+esc(l.nombre)+'</option>';}).join('')+'</select></label>';
+    var ro=row&&c[0]===e.key&&sub!=='motivos'&&sub!=='documentos'&&sub!=='clientes'&&sub!=='productos'&&sub!=='buques'&&sub!=='atas'&&sub!=='balanzas'?' readonly':'';
+    return '<label class="field"><span>'+c[1]+'</span><input id="'+nm+'" value="'+esc(v)+'"'+ro+'></label>';
+  }).join('');
+  openDialog(dlgHead((row?'Editar ':'Agregar a ')+e.t.toLowerCase())+'<div class="dlg-b"><div class="g2">'+fields+'</div><p class="small" id="f-err" style="color:var(--warn)"></p></div>'+
+   '<div class="dlg-f"><button class="btn" data-close>Cancelar</button><button class="btn primary" id="f-ok">Guardar</button></div>','',function(dlg){
+     $('#f-ok',dlg).addEventListener('click',function(){
+       var data={},ok=true;
+       e.cols.forEach(function(c){var el=$('#f-'+c[0],dlg);var v=el.value.trim();if(!v&&c[0]!=='idErp')ok=false;data[c[0]]=(c[2]==='cliente'||c[2]==='producto'||c[0]==='baudios')?Number(v):v;});
+       if(!ok){$('#f-err',dlg).textContent='Completá todos los campos.';return;}
+       if(row){Object.keys(data).forEach(function(k){row[k]=data[k];});audit('Dato maestro modificado',e.t+': '+String(cellVal(e,e.cols[0],row)));}
+       else{
+         if(e.key==='id'&&sub!=='lugares'){data.id=arr.reduce(function(m,x){return Math.max(m,Number(x.id)||0);},0)+1;}
+         if(sub==='balanzas'){data.online=true;data.pendSync=0;data.lastSync=Date.now();data.cert={numero:'A registrar',desde:Date.now(),hasta:Date.now()};}
+         arr.push(data);audit('Dato maestro agregado',e.t+': '+String(cellVal(e,e.cols[0],data)));
+       }
+       save();dlg.close();toast('Cambios guardados en '+e.t.toLowerCase()+'.');render();
+     });
+   });
+}
+
+/* ---------- reglas ---------- */
+function viewReglas(){
+  var dis=isAdmin()?'':' disabled';var r=S.reglas;
+  return '<div class="page-head"><div><h1>Reglas de pesaje</h1><p class="muted small">Validaciones configurables desde la aplicación, sin cambios de código.</p></div>'+(isAdmin()?'<button class="btn primary" data-act="reglas-save">Guardar cambios</button>':'')+'</div>'+
+  (isAdmin()?'':'<div class="note info" style="margin-bottom:14px">'+ico('info')+'<span>Solo un administrador puede modificar las reglas. Entrá como R. Díaz para editarlas.</span></div>')+
+  '<div class="dash" style="grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)">'+
+   '<section class="panel pad stack"><h2>Peso bruto máximo por cantidad de ejes</h2><div class="tblwrap"><table class="tbl"><thead><tr><th>Cantidad de ejes</th><th>Peso máximo (kg)</th><th>Con tolerancia (kg)</th></tr></thead><tbody>'+
+    [2,3,4,5,6].map(function(n){return '<tr><td>'+n+' ejes</td><td><label class="field" style="max-width:180px"><span class="small" style="position:absolute;left:-9999px">Máximo para '+n+' ejes</span><input type="number" step="100" id="rg-'+n+'" value="'+r.ejes[n]+'"'+dis+'></label></td><td class="num">'+kg(r.ejes[n]*(1+r.tolerancia/100))+'</td></tr>';}).join('')+
+   '</tbody></table></div><p class="small muted">Valores de ejemplo. Se definen con el CGPBB en la etapa de análisis.</p></section>'+
+   '<section class="panel pad stack"><h2>Parámetros</h2>'+
+    '<label class="field"><span>Tolerancia sobre el máximo (%)</span><input type="number" id="rg-tol" min="0" max="20" step="0.5" value="'+r.tolerancia+'"'+dis+'></label>'+
+    '<label class="field"><span>Peso mínimo para capturar (kg)</span><input type="number" id="rg-min" min="0" step="20" value="'+r.pesoMinimo+'"'+dis+'></label>'+
+    '<label class="check"><input type="checkbox" id="rg-lugar"'+(S.parametros.lugarAutomatico?' checked':'')+dis+'> Asignar el lugar operativo según la balanza</label>'+
+    '<label class="check"><input type="checkbox" id="rg-mail"'+(S.parametros.envioAutomatico?' checked':'')+dis+'> Enviar el comprobante por correo al cerrar cada ticket</label>'+
+   '</section></div>';
+}
+function saveReglas(){
+  var r=S.reglas;[2,3,4,5,6].forEach(function(n){var v=Number($('#rg-'+n).value);if(v>0)r.ejes[n]=v;});
+  var tol=Number($('#rg-tol').value);if(tol>=0)r.tolerancia=tol;var mn=Number($('#rg-min').value);if(mn>=0)r.pesoMinimo=mn;
+  S.parametros.lugarAutomatico=$('#rg-lugar').checked;S.parametros.envioAutomatico=$('#rg-mail').checked;
+  audit('Reglas de pesaje modificadas','Tolerancia '+r.tolerancia+'%, peso mínimo '+kg(r.pesoMinimo)+' kg');save();toast('Reglas de pesaje guardadas.');render();
+}
+
+/* ---------- calibración ---------- */
+function viewCal(){
+  var can=isSup();
+  return '<div class="page-head"><div><h1>Certificados de calibración</h1><p class="muted small">Vigencia de los certificados de cada balanza, con aviso 30 días antes del vencimiento.</p></div>'+(can?'<button class="btn primary" data-act="cal-add">Registrar certificado</button>':'')+'</div>'+
+  '<section class="panel"><div class="tblwrap"><table class="tbl"><thead><tr><th>Balanza</th><th>Lugar operativo</th><th>Número de certificado</th><th>Desde</th><th>Hasta</th><th>Estado</th></tr></thead><tbody>'+
+  S.balanzas.map(function(b){var ce=certEstado(b.cert);return '<tr><td>'+esc(b.nombre)+'</td><td>'+esc(lugar(b.lugar).nombre)+'</td><td class="mono">'+esc(b.cert.numero)+'</td><td>'+fecha(b.cert.desde)+'</td><td>'+fecha(b.cert.hasta)+'</td><td><span class="badge '+ce.cls+'">'+ce.txt+'</span></td></tr>';}).join('')+
+  '</tbody></table></div></section>';
+}
+function openCal(){
+  openDialog(dlgHead('Registrar certificado de calibración')+
+   '<div class="dlg-b"><label class="field"><span>Balanza</span><select id="c-bal">'+S.balanzas.map(function(b){return '<option value="'+b.id+'">'+esc(b.nombre+', '+lugar(b.lugar).nombre)+'</option>';}).join('')+'</select></label>'+
+   '<label class="field"><span>Número de certificado</span><input id="c-num" placeholder="CAL-0000"></label>'+
+   '<div class="g2"><label class="field"><span>Vigente desde</span><input type="date" id="c-desde" value="'+isoDate(Date.now())+'"></label><label class="field"><span>Vigente hasta</span><input type="date" id="c-hasta" value="'+isoDate(Date.now()+365*DAY)+'"></label></div>'+
+   '<p class="small" id="c-err" style="color:var(--warn)"></p></div>'+
+   '<div class="dlg-f"><button class="btn" data-close>Cancelar</button><button class="btn primary" id="c-ok">Registrar certificado</button></div>','narrow',function(dlg){
+     $('#c-ok',dlg).addEventListener('click',function(){
+       var n=$('#c-num',dlg).value.trim();if(!n){$('#c-err',dlg).textContent='Ingresá el número de certificado.';return;}
+       var b=bal(Number($('#c-bal',dlg).value));
+       b.cert={numero:n,desde:new Date($('#c-desde',dlg).value+'T12:00').getTime(),hasta:new Date($('#c-hasta',dlg).value+'T12:00').getTime()};
+       audit('Certificado de calibración registrado',b.nombre+': '+n+', vigente hasta '+fecha(b.cert.hasta));save();dlg.close();toast('Certificado registrado para '+b.nombre+'.');render();
+     });
+   });
+}
+
+/* ---------- auditoría ---------- */
+function viewAudit(){
+  var us={};S.auditoria.forEach(function(a){us[a.usuario]=1;});
+  return '<div class="page-head"><div><h1>Auditoría</h1><p class="muted small">Registro de todas las acciones, con usuario, fecha y hora.</p></div></div>'+
+  '<section class="panel pad" style="margin-bottom:14px"><div class="g2">'+
+   '<label class="field"><span>Buscar</span><input type="search" data-bind="af.q" value="'+esc(UI.af.q)+'" placeholder="Acción, detalle o número de ticket"></label>'+
+   '<label class="field"><span>Usuario</span><select data-bind="af.usuario"><option value="">Todos</option>'+Object.keys(us).map(function(u){return '<option'+(UI.af.usuario===u?' selected':'')+'>'+esc(u)+'</option>';}).join('')+'</select></label>'+
+  '</div></section><section class="panel"><div class="tblwrap" id="au-table">'+auditTable()+'</div></section>';
+}
+function auditTable(){
+  var q=UI.af.q.trim().toLowerCase(),u=UI.af.usuario;
+  var l=S.auditoria.filter(function(a){if(u&&a.usuario!==u)return false;if(q&&(a.accion+' '+a.detalle).toLowerCase().indexOf(q)<0)return false;return true;}).slice(0,200);
+  if(!l.length)return '<p class="empty">No hay registros con esos filtros.</p>';
+  return '<table class="tbl"><thead><tr><th>Fecha y hora</th><th>Usuario</th><th>Perfil</th><th>Acción</th><th>Detalle</th></tr></thead><tbody>'+
+   l.map(function(a){return '<tr><td style="white-space:nowrap">'+fh(a.ts)+'</td><td>'+esc(a.usuario)+'</td><td class="muted">'+esc(a.rol)+'</td><td>'+esc(a.accion)+'</td><td>'+esc(a.detalle)+'</td></tr>';}).join('')+'</tbody></table>';
+}
+
+/* ---------- panel de supervisión ---------- */
+var DIAS=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+function viewPanel(){
+  var f=UI.pf,now=Date.now();
+  var from=f.periodo==='hoy'?new Date(new Date().setHours(0,0,0,0)).getTime():now-24*HOUR;
+  function ok(t){return (!f.lugar||t.lugar===f.lugar)&&(!f.cliente||String(t.clienteId)===String(f.cliente));}
+  var fin=S.tickets.filter(function(t){return t.estado==='Finalizado'&&t.salida.ts>=from&&ok(t);});
+  var anu=S.tickets.filter(function(t){return t.estado==='Anulado'&&t.entrada.ts>=from&&ok(t);});
+  var pend=S.tickets.filter(function(t){return t.estado==='Pendiente'&&ok(t);});
+  var ton=fin.reduce(function(a,t){return a+t.neto;},0)/1000;
+  var tonC=fin.filter(function(t){return t.tipo==='Carga';}).reduce(function(a,t){return a+t.neto;},0)/1000;
+  var perm=fin.length?Math.round(fin.reduce(function(a,t){return a+(t.salida.ts-t.entrada.ts);},0)/fin.length/MIN):0;
+  var oldest=pend.length?Math.min.apply(null,pend.map(function(t){return t.entrada.ts;})):null;
+  var h0=new Date(now);h0.setMinutes(0,0,0);var hrs=[],k;for(k=8;k>=0;k--)hrs.push(h0.getTime()-k*HOUR);
+  var vals=hrs.map(function(hs){return fin.filter(function(t){return t.salida.ts>=hs&&t.salida.ts<hs+HOUR;}).reduce(function(a,t){return a+t.neto;},0)/1000;});
+  var mx=Math.max.apply(null,vals.concat([1]));
+  var bars=vals.map(function(v){return '<div class="bar"><b>'+(v?Math.round(v):'')+'</b><i style="height:'+(v/mx*150).toFixed(0)+'px"></i></div>';}).join('');
+  var xs=hrs.map(function(hs){return '<span>'+pad(new Date(hs).getHours())+' h</span>';}).join('');
+  var ops=fin.concat(anu).sort(function(a,b){return (b.salida?b.salida.ts:b.entrada.ts)-(a.salida?a.salida.ts:a.entrada.ts);}).slice(0,6);
+  var d=new Date(now);
+  function sel(bind,val,optsHtml,label){return '<label class="field"><span>'+label+'</span><select data-bind="'+bind+'" style="min-width:150px">'+optsHtml+'</select></label>';}
+  return '<div class="page-head"><div><h1>Operación del día</h1><p class="muted small">'+DIAS[d.getDay()]+' '+fecha(now)+' · datos en tiempo real de los tres puestos de balanza</p></div>'+
+   '<div class="filters">'+
+    sel('pf.periodo',f.periodo,'<option value="24h"'+(f.periodo==='24h'?' selected':'')+'>Últimas 24 horas</option><option value="hoy"'+(f.periodo==='hoy'?' selected':'')+'>Hoy</option>','Período')+
+    sel('pf.lugar',f.lugar,'<option value="">Todos</option>'+S.lugares.map(function(l){return '<option value="'+l.id+'"'+(f.lugar===l.id?' selected':'')+'>'+esc(l.nombre)+'</option>';}).join(''),'Lugar operativo')+
+    sel('pf.cliente',f.cliente,opts(S.clientes,f.cliente,function(x){return x.razon;},'Todos'),'Cliente')+
+    '<button class="btn outline" data-act="exportar">Exportar</button>'+
+   '</div></div>'+
+  '<div class="kpis">'+
+   kpi('Pesadas finalizadas',String(fin.length),f.lugar?lugar(f.lugar).nombre:'En los tres puestos de balanza')+
+   kpi('Toneladas netas',Math.round(ton).toLocaleString('es-AR')+' t','Carga '+Math.round(tonC).toLocaleString('es-AR')+' t · Descarga '+Math.round(ton-tonC).toLocaleString('es-AR')+' t')+
+   kpi('Permanencia promedio',perm+' min','Entre primer y segundo pesaje')+
+   kpi('Pendientes de segundo pesaje',String(pend.length),oldest?'El más antiguo ingresó a las '+hora(oldest):'Sin pendientes')+
+  '</div><div class="dash">'+
+   '<section class="card pad"><h2 style="margin-bottom:12px">Toneladas netas por hora</h2><div class="bars">'+bars+'</div><div class="bars-x">'+xs+'</div></section>'+
+   '<section class="card pad stack" style="gap:10px"><h2>Estado de las balanzas</h2>'+S.balanzas.filter(function(b){return !f.lugar||b.lugar===f.lugar;}).map(function(b){var ce=certEstado(b.cert);
+     return '<div class="bcard"><div class="row between"><span style="font-size:14px;font-weight:600">'+esc(b.nombre)+'</span>'+(b.online?'<span class="badge b-info">En línea</span>':'<span class="badge b-warn">Modo local</span>')+'</div>'+
+       '<span class="muted">'+esc(lugar(b.lugar).nombre)+'</span><span>'+(b.online?'Sincronizada '+hora(b.lastSync):b.pendSync+' pesadas pendientes de sincronizar')+'</span><span class="muted">Certificado '+(ce.d>30?'vigente hasta '+fecha(b.cert.hasta):(ce.d<0?'vencido':'vence el '+fecha(b.cert.hasta)))+'</span></div>';}).join('')+'</section>'+
+  '</div>'+
+  '<section class="card" style="padding:14px 8px 4px"><div class="row between" style="padding:0 12px 6px"><h2>Últimas operaciones</h2><a href="#/tickets" style="font-size:13px;font-weight:600;color:var(--brand-text)">Ver todas</a></div>'+
+   '<div class="tblwrap"><table class="tbl"><thead><tr><th>Ticket</th><th>Hora</th><th>Lugar</th><th>Patente</th><th>Buque</th><th>Cliente</th><th>Producto</th><th class="r">Neto (kg)</th><th>Estado</th></tr></thead><tbody>'+
+   (ops.map(function(t){
+     var est=t.estado==='Finalizado'?'<span class="badge b-info">Finalizado</span>':'<span class="badge b-warn">Anulado</span>';
+     return '<tr><td><button class="link mono" data-act="ticket" data-id="'+t.id+'">'+num(t.id)+'</button></td><td>'+hora(t.salida?t.salida.ts:t.entrada.ts)+'</td><td>'+esc(lugar(t.lugar).nombre.replace('Puerto ','')+' · B'+(t.balSal||t.balEnt))+'</td><td>'+plate(t.patente)+'</td><td>'+esc(buqueN(t.buqueId))+'</td><td>'+esc(cliente(t.clienteId))+'</td><td>'+esc(producto(t.productoId))+'</td><td class="r">'+(t.neto!=null?kg(t.neto):'-')+'</td><td>'+est+'</td></tr>';
+   }).join('')||'<tr><td colspan="9" class="empty">Sin operaciones en el período.</td></tr>')+
+   '</tbody></table></div></section>';
+}
+function kpi(l,v,s){return '<section class="card kpi"><span class="l">'+esc(l)+'</span><span class="v">'+esc(v)+'</span><span class="s">'+esc(s)+'</span></section>';}
+
+/* ---------- eventos ---------- */
+function doLogin(){
+  var u=USERS.filter(function(x){return x.id===$('#lg-user').value;})[0];
+  S.user=u;S.balanzaId=Number($('#lg-bal').value);audit('Inicio de sesión',balLabel(S.balanzaId));save();
+  if(!location.hash)location.hash='#/puesto';render();
+  if(!ssGet('guia')){ssSet('guia','1');openGuia();}
+}
+function ssGet(k){try{return sessionStorage.getItem('cgpbb-'+k);}catch(e){return null;}}
+function ssSet(k,v){try{sessionStorage.setItem('cgpbb-'+k,v);}catch(e){}}
+document.addEventListener('click',function(e){
+  var el=e.target.closest('[data-act]');if(!el||el.disabled)return;
+  var a=el.getAttribute('data-act');var id=el.getAttribute('data-id');
+  switch(a){
+    case 'login':e.preventDefault();doLogin();break;
+    case 'logout':audit('Cierre de sesión',turnoCorto());S.user=null;UI.modo='nuevo';UI.sel=null;UI.captura=null;save();render();break;
+    case 'guia':openGuia();break;
+    case 'reset':
+      openDialog(dlgHead('Reiniciar datos de ejemplo')+'<div class="dlg-b"><p>Se borran los tickets, cambios y registros de auditoría de esta demo y se vuelven a cargar los datos iniciales.</p></div><div class="dlg-f"><button class="btn" data-close>Cancelar</button><button class="btn warn" id="rs-ok">Reiniciar datos</button></div>','narrow',function(dlg){
+        $('#rs-ok',dlg).addEventListener('click',function(){var u=S.user,bid=S.balanzaId;S=seed();S.user=u;S.balanzaId=bid;UI.modo='nuevo';UI.sel=null;UI.captura=null;UI.draft=blankDraft();SC.objetivo=0;save();dlg.close();render();toast('Datos de ejemplo reiniciados.');});
+      });break;
+    case 'capturar':capturar();break;
+    case 'registrar':registrar();break;
+    case 'limpiar':UI.draft=blankDraft();UI.captura=null;renderTicketCol();break;
+    case 'sel':seleccionar(id);break;
+    case 'nuevo':SC.objetivo=0;UI.modo='nuevo';UI.sel=null;UI.captura=null;renderTicketCol();break;
+    case 'cerrar':cerrar();break;
+    case 'anular':openAnular(Number(id));break;
+    case 'imprimir':openComprobante(Number(id),true);break;
+    case 'enviar':openMail(tk(Number(id)));break;
+    case 'manual':openManual();break;
+    case 'sim-subir':simSubir();break;
+    case 'sim-bajar':SC.objetivo=0;break;
+    case 'sim-conn':toggleConn();break;
+    case 'ticket':openTicket(Number(id));break;
+    case 'exportar':audit('Exportación de datos','Consulta exportada a Excel');toast('Exportación generada. En la demo no se descargan archivos.');break;
+    case 'm-add':openMaestro(el.getAttribute('data-ent'),null);break;
+    case 'm-edit':openMaestro(el.getAttribute('data-ent'),id);break;
+    case 'reglas-save':saveReglas();break;
+    case 'cal-add':openCal();break;
+  }
+});
+document.addEventListener('submit',function(e){e.preventDefault();if(e.target&&e.target.id==='login-form')doLogin();});
+function onBind(e){
+  var el=e.target;var b=el.getAttribute&&el.getAttribute('data-bind');if(!b)return;
+  var val=el.type==='checkbox'?el.checked:el.value;
+  if(b==='puesto'){if(e.type!=='change')return;S.balanzaId=Number(val);UI.modo='nuevo';UI.sel=null;UI.captura=null;save();render();return;}
+  if(b.indexOf('d.')===0){
+    var k=b.slice(2);UI.draft[k]=val;
+    if(k==='clienteId'||k==='productoId'){var sb=$('#sim-box');if(sb)sb.value=simTxt();}
+    if(k==='dni'){var cb=$('#chofer-box');if(cb&&e.type==='input')cb.innerHTML=choferBox();}
+    if(k==='patente'||k==='acoplado'){var pp=$('#plate-prev');if(pp)pp.innerHTML=platePrev();}
+    updateLive();return;
+  }
+  if(b==='obs2'){UI.obs2=val;return;}
+  if(b==='confirmExceso'){UI.confirmExceso=val;var bc=$('#btn-cerrar');var t=tk(UI.sel);if(bc&&t)bc.disabled=!canCerrar(t);return;}
+  if(b==='pq'){UI.pq=val;var pl=$('#plist');if(pl)pl.innerHTML=pendItems();return;}
+  if(b.indexOf('tf.')===0){UI.tf[b.slice(3)]=val;var tt=$('#tk-table');if(tt)tt.innerHTML=ticketsTable();return;}
+  if(b.indexOf('af.')===0){UI.af[b.slice(3)]=val;var at=$('#au-table');if(at)at.innerHTML=auditTable();return;}
+  if(b.indexOf('pf.')===0){if(e.type==='change'){UI.pf[b.slice(3)]=val;render();}return;}
+}
+document.addEventListener('input',onBind);
+document.addEventListener('change',function(e){
+  var el=e.target;if(el.tagName==='SELECT'||el.type==='checkbox')onBind(e);
+});
+
+render();
+})();
+</script>
+</body>
+</html>
