@@ -1,0 +1,1180 @@
+<!doctype html>
+<html lang="es" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light">
+<title>Gestión de Balanzas CGPBB, Fase 1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EEF0F3; --surface:#FFFFFF; --surface-2:#F8F9FB; --ink:#15171C; --muted:#4A5160;
+  --line:#DDE1E7; --line-2:#E3E6EB; --input:#CDD2DA; --brand:#10245C; --brand-2:#1C3576; --brand-ink:#FFFFFF;
+  --brand-soft:#E9EEF9; --brand-text:#10245C; --info:#0B4DB7; --info-soft:#E6EEFB;
+  --warn:#8A4300; --warn-soft:#FFF1DC; --note:#FFF4E5; --note-ink:#6B3600;
+  --ok:#1C6B3A; --ok-soft:#E3F3E8;
+  --top-bg:#10245C; --top-muted:#C9D3EA; --top-line:#3A4E86;
+  --visor-bg:#0F1E45; --visor-muted:#B8C2DA; --visor-pill:#1F3A7A;
+  --focus:#1D5FD6; --shadow:0 18px 50px rgba(10,20,45,.22);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E1218; --surface:#161B24; --surface-2:#1C2230; --ink:#E7EAF0; --muted:#A7AFBD;
+    --line:#2B3342; --line-2:#252C39; --input:#374154; --brand:#3656B8; --brand-2:#27407F; --brand-ink:#FFFFFF;
+    --brand-soft:#1D2946; --brand-text:#A9C1FF; --info:#93B6FF; --info-soft:#1A2A47;
+    --warn:#FFB866; --warn-soft:#3A2711; --note:#33230F; --note-ink:#FFD29A;
+    --ok:#8FD9A8; --ok-soft:#173022;
+    --top-bg:#0B1633; --top-muted:#B4C0DC; --top-line:#263A74;
+    --visor-bg:#060C1E; --visor-muted:#A3B0CF; --visor-pill:#1A2C5E;
+    --focus:#7FA8FF; --shadow:0 18px 50px rgba(0,0,0,.5);
+  }
+}
+:root[data-theme="dark"]{
+    --bg:#0E1218; --surface:#161B24; --surface-2:#1C2230; --ink:#E7EAF0; --muted:#A7AFBD;
+    --line:#2B3342; --line-2:#252C39; --input:#374154; --brand:#3656B8; --brand-2:#27407F; --brand-ink:#FFFFFF;
+    --brand-soft:#1D2946; --brand-text:#A9C1FF; --info:#93B6FF; --info-soft:#1A2A47;
+    --warn:#FFB866; --warn-soft:#3A2711; --note:#33230F; --note-ink:#FFD29A;
+    --ok:#8FD9A8; --ok-soft:#173022;
+    --top-bg:#0B1633; --top-muted:#B4C0DC; --top-line:#263A74;
+    --visor-bg:#060C1E; --visor-muted:#A3B0CF; --visor-pill:#1A2C5E;
+    --focus:#7FA8FF; --shadow:0 18px 50px rgba(0,0,0,.5);
+}
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);}
+*,*::before,*::after{box-sizing:border-box}
+html{height:100%}
+body{height:100%;margin:0;background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+h1,h2,h3{margin:0;line-height:1.2}
+h1{font-size:22px;font-weight:700}
+h2{font-size:15px;font-weight:600}
+p{margin:0}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.mono{font-family:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace}
+
+/* estructura */
+#app{height:100%;display:grid;grid-template-rows:64px 46px minmax(0,1fr)}
+.top{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:0 24px;background:var(--top-bg);color:#fff;min-width:0}
+.top-l,.top-r{display:flex;align-items:center;gap:16px;min-width:0}
+.brand{font-size:18px;font-weight:700;white-space:nowrap}
+.brand-sub{font-size:14px;color:var(--top-muted)}
+.top .sep{width:1px;height:24px;background:var(--top-line)}
+.place{font-size:15px;font-weight:500;white-space:nowrap}
+.pill{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;font-size:13px;white-space:nowrap}
+.pill .dot{width:8px;height:8px;border-radius:50%}
+.pill.off{background:#FFE2B8;color:#5A2C00;font-weight:500}.pill.off .dot{background:#C25E00}
+.who{font-size:13px;color:var(--top-muted);white-space:nowrap}
+.tbtn{height:40px;padding:0 16px;border-radius:8px;border:1px solid var(--top-line);background:transparent;color:#fff;font-size:13px;cursor:pointer;white-space:nowrap}
+.tbtn:hover{background:var(--brand-2)}
+.navbar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:0 20px;background:var(--surface);border-bottom:1px solid var(--line);min-width:0}
+.navbar .tabs2{display:flex;gap:2px;overflow-x:auto;height:100%}
+.navbar .tabs2 a{display:flex;align-items:center;padding:0 12px;color:var(--muted);text-decoration:none;font-size:14px;font-weight:500;border-bottom:2px solid transparent;white-space:nowrap}
+.navbar .tabs2 a:hover{color:var(--ink)}
+.navbar .tabs2 a[aria-current="page"]{color:var(--brand-text);border-bottom-color:var(--brand-text);font-weight:600}
+.main{overflow:auto;padding:20px 24px 0;min-width:0}
+.main::after{content:"";display:block;height:28px}
+.page-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:16px;flex-wrap:wrap}
+.page-head h1{font-size:24px}
+.page-head p{margin-top:4px}
+
+/* componentes */
+.card,.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px}
+.pad{padding:18px}
+.slabel{font-size:12px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:var(--muted)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:44px;padding:0 18px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap;text-decoration:none}
+.btn:hover:not(:disabled){border-color:var(--muted)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:var(--brand-ink);padding:0 22px}
+.btn.primary:hover:not(:disabled){background:var(--brand-2);border-color:var(--brand-2)}
+.btn.outline{border-color:var(--brand-text);color:var(--brand-text)}
+.btn.warn{border-color:var(--warn);color:var(--warn)}
+.btn.xl{height:56px;font-size:16px;border-radius:10px}
+.btn.sm{height:36px;padding:0 12px;font-size:13px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.link{background:none;border:0;padding:0;color:var(--brand-text);font-weight:600;cursor:pointer;text-decoration:underline;text-underline-offset:2px;font-size:14px}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap}
+.b-info{background:var(--info-soft);color:var(--info)}
+.b-warn{background:var(--warn-soft);color:var(--warn)}
+.b-muted{background:var(--brand-soft);color:var(--brand-text)}
+.b-ok{background:var(--ok-soft);color:var(--ok)}
+.field{display:flex;flex-direction:column;gap:4px;min-width:0}
+.field>span{font-size:12px;font-weight:500;color:var(--muted);display:flex;justify-content:space-between;gap:8px}
+.field>span em{font-style:normal;color:var(--info);font-weight:600;font-size:11px}
+.field input,.field select,.field textarea{height:40px;border:1px solid var(--input);border-radius:8px;background:var(--surface);padding:0 12px;min-width:0;width:100%;font-size:14px}
+.field textarea{height:auto;padding:10px 12px;resize:vertical;min-height:58px}
+.field input[readonly],.field textarea[readonly]{background:var(--surface-2)}
+.field input.auto,.field select.auto{border-color:var(--info);background:var(--info-soft)}
+.field input.imo{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:16px;letter-spacing:1px}
+.platebox{min-height:40px;display:flex;align-items:center}
+.check{display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer}
+.check input{width:18px;height:18px;accent-color:var(--brand)}
+.g2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 16px}
+.g3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px 16px}
+.stack{display:flex;flex-direction:column;gap:16px}
+.row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.between{justify-content:space-between}
+.tblwrap{overflow-x:auto}
+.tbl{width:100%;border-collapse:collapse;font-size:13.5px}
+.tbl th{text-align:left;font-size:12px;color:var(--muted);font-weight:600;padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+.tbl td{padding:9px 12px;border-bottom:1px solid var(--bg);font-variant-numeric:tabular-nums;vertical-align:middle}
+.tbl tr:last-child td{border-bottom:0}
+.tbl .r{text-align:right}
+.tbl tbody tr:hover td{background:var(--surface-2)}
+.empty{padding:28px;text-align:center;color:var(--muted)}
+.tabs{display:flex;gap:4px;flex-wrap:wrap;border-bottom:1px solid var(--line);margin-bottom:16px}
+.tabs a{padding:10px 14px;text-decoration:none;color:var(--muted);font-weight:500;border-bottom:2px solid transparent;margin-bottom:-1px}
+.tabs a[aria-current="page"]{color:var(--brand-text);border-bottom-color:var(--brand-text);font-weight:600}
+.note{display:flex;gap:10px;padding:10px 12px;border-radius:8px;font-size:13px;line-height:1.4}
+.note.warn{background:var(--note);color:var(--note-ink)}
+.note.info{background:var(--info-soft);color:var(--info)}
+.note svg{flex-shrink:0;margin-top:1px}
+.kv{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px 18px;margin:0}
+.kv div{min-width:0}
+.kv dt{font-size:12px;color:var(--muted);font-weight:500;margin-bottom:3px}
+.kv dd{margin:0;font-weight:500;overflow-wrap:break-word}
+
+/* patente argentina */
+.plate{display:inline-flex;flex-direction:column;vertical-align:middle;border:1.5px solid #1A1A1A;border-radius:5px;background:#FFFFFF;color:#111111;overflow:hidden;line-height:1;flex-shrink:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.plate-band{background:#1B3F9C;color:#FFFFFF;height:9px;display:flex;align-items:center;justify-content:center;gap:4px;font-family:"IBM Plex Sans",system-ui,sans-serif;font-size:5.5px;font-weight:700;letter-spacing:.4px;padding:0 4px;white-space:nowrap}
+.plate-band svg{display:block}
+.plate-num{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;font-size:19px;letter-spacing:1.2px;padding:2px 9px 3px;text-align:center;white-space:nowrap}
+.plates{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+.plates .cap{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted)}
+
+/* puesto */
+.puesto{display:grid;grid-template-columns:300px minmax(0,1fr) 300px;grid-template-areas:"izq ticket pend";gap:16px;align-items:start}
+.puesto>.col-izq{grid-area:izq;position:sticky;top:0}
+.puesto>.ticket{grid-area:ticket}
+.puesto>.col-side{grid-area:pend;position:sticky;top:0}
+.puesto .plist{max-height:max(180px,calc(100vh - 340px));overflow-y:auto}
+.ticket>div:empty,.stack>div:empty{display:none}
+.col{display:flex;flex-direction:column;gap:16px;min-width:0}
+.visor{background:var(--visor-bg);color:#FFFFFF;border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:10px}
+.visor .vlabel{font-size:12px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:var(--visor-muted)}
+.vnum{display:flex;align-items:baseline;gap:10px}
+.vnum #visor-num{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:58px;font-weight:600;line-height:1;font-variant-numeric:tabular-nums}
+.vunit{font-size:22px;color:var(--visor-muted)}
+.vfoot{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.vstate{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:var(--visor-pill);font-size:13px;font-weight:600}
+.vstate i{width:8px;height:8px;border-radius:50%;background:#7F8BA8}
+.vstate.stable i{background:#8FBCFF}
+.vstate.moving i{background:#FFB45C;animation:blink .6s infinite}
+@keyframes blink{50%{opacity:.25}}
+.vconn{font-size:12px;color:var(--visor-muted)}
+.caphint{font-size:13px;color:var(--muted);margin-top:-8px;min-height:19px}
+.ticket{padding:22px 24px;display:flex;flex-direction:column;gap:16px}
+.tk-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.tk-head p{margin-top:4px;font-size:13px;color:var(--muted)}
+.tk-actions{position:sticky;bottom:0;z-index:2;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:4px -24px -22px;padding:14px 24px;background:var(--surface);border-top:1px solid var(--line-2);border-radius:0 0 11px 11px}
+.tk-actions .req{flex:1 1 220px;min-width:0}
+.tk-actions>.row{margin-left:auto}
+.weights{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.wbox{border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.wbox .lbl{font-size:12px;color:var(--muted)}
+.wbox .val{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:24px;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.wbox .soft{font-size:14px;font-weight:600;color:var(--muted);padding-top:4px}
+.wbox.live{border-style:dashed;border-color:var(--brand-text)}
+.wbox.net{background:var(--brand);border-color:var(--brand);color:var(--brand-ink)}
+.wbox.net .lbl,.wbox.net .soft{color:var(--top-muted)}
+.plist{display:flex;flex-direction:column;gap:8px}
+.pitem{display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%;min-height:58px;padding:8px 12px;border:1px solid var(--line-2);border-radius:8px;background:var(--surface);text-align:left;cursor:pointer}
+.pitem:hover{border-color:var(--muted)}
+.pitem[aria-pressed="true"]{border-color:var(--brand-text);background:var(--brand-soft)}
+.pitem .l{display:flex;flex-direction:column;gap:5px;min-width:0}
+.pitem .sub{font-size:12px;color:var(--muted)}
+.pitem .t{font-size:13px;color:var(--muted);text-align:right;white-space:nowrap}
+.simbox{border:1px dashed var(--muted);border-radius:12px;background:transparent}
+.simbox summary{cursor:pointer;padding:12px 16px;font-weight:600;font-size:14px}
+.simbox .inner{padding:0 16px 16px;display:flex;flex-direction:column;gap:8px}
+.simbox .row .btn{flex:1}
+
+/* configuración */
+.cfg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start}
+.cfg .wide{grid-column:1 / -1}
+.status{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;border:1px solid var(--line-2);border-radius:10px;padding:12px 14px}
+.status dt{font-size:12px;color:var(--muted);margin-bottom:2px}
+.status dd{margin:0;font-weight:500;overflow-wrap:anywhere}
+.cadena{background:var(--visor-bg);color:#fff;border-radius:8px;padding:10px 12px;font-size:14px;white-space:pre;overflow-x:auto}
+
+/* diálogos y avisos */
+dialog{border:0;border-radius:14px;padding:0;background:var(--surface);color:var(--ink);width:min(580px,calc(100% - 32px));max-height:calc(100% - 40px);box-shadow:var(--shadow)}
+dialog.wide{width:min(880px,calc(100% - 32px))}
+dialog.narrow{width:min(460px,calc(100% - 32px))}
+dialog::backdrop{background:rgba(8,14,32,.5)}
+.dlg-h{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:18px 20px;border-bottom:1px solid var(--line-2)}
+.dlg-h h2{font-size:17px}
+.dlg-b{padding:18px 20px;display:flex;flex-direction:column;gap:14px}
+.dlg-f{position:sticky;bottom:0;background:var(--surface);display:flex;justify-content:flex-end;gap:10px;padding:14px 20px;border-top:1px solid var(--line-2);flex-wrap:wrap}
+.xbtn{width:36px;height:36px;border-radius:8px;border:1px solid var(--line);background:var(--surface);cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+.toasts{position:fixed;left:20px;bottom:calc(20px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:8px;z-index:60;max-width:min(420px,calc(100% - 40px));pointer-events:none}
+.toast{background:var(--ink);color:var(--surface);padding:12px 16px;border-radius:10px;font-size:14px;box-shadow:var(--shadow);animation:tin .2s ease-out}
+.toast.warn{background:#6A3400;color:#fff}
+@keyframes tin{from{transform:translateY(8px);opacity:0}}
+.login{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:20px;background:var(--top-bg);overflow:auto}
+.login-card{width:min(440px,100%);padding:28px;display:flex;flex-direction:column;gap:16px}
+.login-card .lbrand{display:flex;align-items:center;gap:10px;font-size:20px;font-weight:700}
+.login-card .lbrand small{font-size:14px;font-weight:500;color:var(--muted)}
+.login-card .demo-users{border-top:1px solid var(--line-2);padding-top:14px;font-size:13px;color:var(--muted);display:flex;flex-direction:column;gap:4px}
+.comp{background:var(--bg);padding:20px;display:flex;flex-direction:column;gap:14px}
+.comp .dcard{padding:6px 16px}
+.comp .drow{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--bg);font-size:13px}
+.comp .drow:last-child{border-bottom:0}
+.comp .drow span:first-child{color:var(--muted);flex-shrink:0}
+.comp .drow span:last-child{text-align:right;font-weight:500}
+.comp .w3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.comp .w3>div{padding:10px;display:flex;flex-direction:column;gap:2px}
+.comp .w3 small{font-size:11px;color:var(--muted)}
+.comp .w3 b{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:14px}
+.comp .w3 .net{background:var(--brand);border-color:var(--brand);color:#fff;border-radius:12px}
+.comp .w3 .net small{color:var(--top-muted)}
+.steps{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:8px}
+
+/* impresión del ticket: tres copias */
+#print-root{display:none}
+.pcopy{font-family:"IBM Plex Sans",Arial,sans-serif;color:#000;background:#fff;padding:18px 22px;border:1px solid #000;margin-bottom:14px;page-break-inside:avoid;break-inside:avoid;font-size:12px}
+.pcopy .ph{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;border-bottom:1px solid #000;padding-bottom:8px;margin-bottom:8px}
+.pcopy .ph b{font-size:14px}
+.pcopy .pc-l{border:1.5px solid #000;padding:4px 10px;font-weight:700;font-size:12px;white-space:nowrap}
+.pcopy h2{font-size:15px;margin:2px 0 8px}
+.pcopy table{width:100%;border-collapse:collapse}
+.pcopy td{padding:3px 0;vertical-align:top}
+.pcopy td:first-child{width:34%;color:#333}
+.pcopy .pw{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}
+.pcopy .pw div{border:1px solid #000;padding:6px 8px}
+.pcopy .pw small{display:block;font-size:10px}
+.pcopy .pw b{font-family:"IBM Plex Mono",monospace;font-size:15px}
+.pcopy .pf{display:flex;justify-content:space-between;gap:20px;margin-top:22px;font-size:11px}
+.pcopy .pf span{border-top:1px solid #000;padding-top:3px;min-width:180px;text-align:center}
+
+@media (min-width:1500px){
+  .puesto{grid-template-columns:340px minmax(0,1fr) 330px;gap:20px}
+  .vnum #visor-num{font-size:68px}
+}
+@media (max-width:1180px){
+  .puesto{grid-template-columns:300px minmax(0,1fr);grid-template-areas:"izq ticket" "pend ticket";grid-template-rows:auto 1fr}
+  .puesto>.col-izq,.puesto>.col-side{position:static}
+  .puesto .plist{max-height:none;overflow:visible}
+}
+@media (max-width:1040px){
+  .brand-sub,.top .sep.s1{display:none}
+  .cfg{grid-template-columns:1fr}
+  .status{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:860px){
+  .puesto{grid-template-columns:minmax(0,1fr);grid-template-areas:"izq" "ticket" "pend";grid-template-rows:auto}
+}
+@media (max-width:760px){
+  #app{grid-template-rows:auto 46px minmax(0,1fr)}
+  .top{flex-wrap:wrap;padding:10px 16px;gap:8px 12px}
+  .top-l,.top-r{flex-wrap:wrap;gap:8px 12px}
+  .top .sep{display:none}
+  .navbar{padding:0 8px}
+  .navbar .link{display:none}
+  .g2,.g3,.kv,.weights{grid-template-columns:1fr}
+  .main{padding:16px 16px 0}
+  .ticket{padding:18px 16px}
+  .tk-actions{position:static;margin:4px -16px -18px;padding:12px 16px}
+  .vnum #visor-num{font-size:54px}
+  .status{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media print{
+  @page{margin:12mm}
+  body{background:#fff;height:auto}
+  body>*:not(#print-root){display:none!important}
+  #print-root{display:block}
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div class="toasts" id="toasts" aria-live="polite"></div>
+<div id="print-root" aria-hidden="true"></div>
+<script>
+(function(){
+'use strict';
+/* ---------- utilidades ---------- */
+var LS_KEY='cgpbb-balanzas-fase1-v2';
+var MIN=60000, HOUR=3600000, DAY=86400000;
+var PESO_MIN=500;
+var PUESTO={lugar:'Ingeniero White',balanza:'Balanza 1',marca:'Toledo'};
+var CLAVE_DEMO='demo1234';
+function $(s,r){return (r||document).querySelector(s);}
+function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s));}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function kg(n){return Math.round(n).toLocaleString('es-AR');}
+function r20(n){return Math.round(n/20)*20;}
+function pad(n){return String(n).padStart(2,'0');}
+function hora(ts){var d=new Date(ts);return pad(d.getHours())+':'+pad(d.getMinutes());}
+function fecha(ts){var d=new Date(ts);return pad(d.getDate())+'/'+pad(d.getMonth()+1)+'/'+d.getFullYear();}
+function fh(ts){return fecha(ts)+' '+hora(ts);}
+function esHoy(ts){return new Date(ts).toDateString()===new Date().toDateString();}
+function cuando(ts){return esHoy(ts)?hora(ts):pad(new Date(ts).getDate())+'/'+pad(new Date(ts).getMonth()+1)+' '+hora(ts);}
+function num(t){return String(t).padStart(6,'0');}
+function normPat(p){
+  var s=String(p||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+  var m=s.match(/^([A-Z]{2})(\d{3})([A-Z]{2})$/);if(m)return m[1]+' '+m[2]+' '+m[3];
+  m=s.match(/^([A-Z]{3})(\d{3})$/);if(m)return m[1]+' '+m[2];
+  return '';
+}
+function placeTxt(){return PUESTO.lugar+' · '+PUESTO.balanza;}
+
+var USERS=[
+  {id:'mferreyra',nombre:'M. Ferreyra',rol:'Operador'},
+  {id:'jortiz',nombre:'J. Ortiz',rol:'Operador'},
+  {id:'rdiaz',nombre:'R. Díaz',rol:'Administrador'}
+];
+function isAdmin(){return S.user&&S.user.rol==='Administrador';}
+function turnoCorto(ts){var h=new Date(ts||Date.now()).getHours();if(h>=6&&h<14)return 'Turno 6 a 14 h';if(h>=14&&h<22)return 'Turno 14 a 22 h';return 'Turno 22 a 6 h';}
+
+/* ---------- datos de ejemplo ---------- */
+function seed(){
+  var now=Date.now();
+  var s={
+    version:1, seededAt:now, user:null, sesion:null, seq:4201,
+    config:{
+      balanza:{puerto:'COM3',baudios:4800,datos:7,paridad:'Par',parada:1},
+      respaldo:{ruta:'\\\\SRV-CGPBB\\Respaldos\\Balanza-IW1',frecuencia:'Cada 4 horas',ultimo:{ts:now-95*MIN,ok:true,archivo:'balanzas_iw1_'+stamp(now-95*MIN)+'.bak',tam:'18,4 MB'}},
+      lectura:{servidor:'PC-BALANZA-IW1',base:'balanzas_iw1',usuario:'consulta_bi',clave:'Lectura-IW1-2026',alcance:'Solo lectura sobre tickets y datos maestros'}
+    },
+    clientes:[
+      {id:1,razon:'Agroexportadora del Sur S.A.',cuit:'30-00000001-1'},
+      {id:2,razon:'Cerealera Pampeana S.A.',cuit:'30-00000002-2'},
+      {id:3,razon:'Oleaginosas del Plata S.A.',cuit:'30-00000003-3'},
+      {id:4,razon:'Fertilizantes Bahía S.A.',cuit:'30-00000004-4'}
+    ],
+    productos:[
+      {id:1,nombre:'Trigo pan'},{id:2,nombre:'Maíz'},{id:3,nombre:'Pellets de soja'},
+      {id:4,nombre:'Cebada cervecera'},{id:5,nombre:'Urea granulada',simCargado:true} /* simCargado: solo para el simulador, el camión llega cargado */
+    ],
+    buques:[
+      {id:1,nombre:'MV Atlántico Sur',imo:'9486221'},{id:2,nombre:'MV Punta Alta',imo:'9512378'},
+      {id:3,nombre:'MV Río Negro',imo:'9433054'},{id:4,nombre:'MV Cabo Corrientes',imo:'9398810'},
+      {id:5,nombre:'MV Bahía Grande',imo:'9541127'},{id:6,nombre:'MV Cerro Colorado',imo:'9467832'}
+    ],
+    atas:[
+      {id:1,razon:'Agencia Marítima del Sur',cuit:'30-00000010-0'},
+      {id:2,razon:'Transmar Bahía',cuit:'30-00000011-9'},
+      {id:3,razon:'Agencia Puerto Blanco',cuit:'30-00000012-7'}
+    ],
+    documentos:[
+      {id:1,clienteId:1,productoId:1,sim:'26 001 EC01 004512 K'},
+      {id:2,clienteId:2,productoId:2,sim:'26 001 EC01 004498 H'},
+      {id:3,clienteId:3,productoId:3,sim:'26 001 EC01 004507 M'},
+      {id:4,clienteId:1,productoId:4,sim:'26 001 EC01 004530 P'},
+      {id:5,clienteId:4,productoId:5,sim:'26 001 IC04 001377 T'}
+    ],
+    operaciones:[
+      {id:1,buqueId:1,clienteId:1,productoId:1},
+      {id:2,buqueId:2,clienteId:3,productoId:3},
+      {id:3,buqueId:3,clienteId:2,productoId:2},
+      {id:4,buqueId:4,clienteId:4,productoId:5},
+      {id:5,buqueId:5,clienteId:1,productoId:4}
+    ],
+    estados:[
+      {id:'Pendiente',desc:'Primer pesaje registrado. Falta el segundo pesaje.'},
+      {id:'Finalizado',desc:'Los dos pesajes están registrados y el neto calculado.'},
+      {id:'Anulado',desc:'Ticket dado de baja con motivo. Se conserva con todos sus datos.'}
+    ],
+    motivos:[
+      {id:1,texto:'Error en la carga de datos'},{id:2,texto:'Pesada duplicada'},
+      {id:3,texto:'Camión retirado sin completar la operación'},{id:4,texto:'Otro'}
+    ],
+    tickets:[]
+  };
+  var pats=['AF 902 JT','AC 381 PL','AE 554 RK','AB 217 MD','AD 776 WX','AF 115 NB','AE 640 ZC','AB 902 KF','AC 118 RT','AD 433 PP'];
+  var acops=['AD 318 KC','AB 620 PT','AC 477 WN','AE 309 GL','AF 812 DR','AD 950 MS','AB 133 VH','AC 704 QZ','AE 561 JB','AF 226 LK'];
+  var ops=['J. Ortiz','M. Ferreyra'];
+  var i;
+  for(i=0;i<10;i++){
+    var ent=now-(20*60-i*105)*MIN;
+    var dur=(28+(i*11)%34)*MIN;
+    var op=s.operaciones[i%5];
+    var desc=op.productoId===5;
+    var tara=r20(13500+(i*431)%2600);
+    var neto=r20(24000+(i*977)%7000);
+    var t=nuevoT(s,{ot:i%3===2?'':'OT 2026-0'+(360+i),buqueId:op.buqueId,clienteId:op.clienteId,productoId:op.productoId,
+      ataId:(i%3)+1,patente:pats[i],acoplado:acops[i],ejes:[5,5,6,5,4][i%5],obs:'',control:false,
+      entrada:{peso:desc?tara+neto:tara,ts:ent,usuario:ops[i%2]}});
+    if(i===4){
+      t.estado='Anulado';t.anulacion={ts:ent+6*MIN,usuario:'J. Ortiz',motivo:'Pesada duplicada',detalle:'El camión se registró dos veces en el primer pesaje.'};
+    } else if(i===7){
+      t.control=true;t.obs='Pesada de control de tara solicitada por Operaciones.';
+      t.salida={peso:0,ts:ent+9*MIN,usuario:ops[i%2]};t.neto=t.entrada.peso;t.estado='Finalizado';
+    } else {
+      t.salida={peso:desc?tara:tara+neto,ts:ent+dur,usuario:ops[i%2]};t.neto=neto;t.estado='Finalizado';
+    }
+    s.tickets.push(t);
+  }
+  var ayer=new Date(now-DAY);ayer.setHours(21,40,0,0);
+  var pend=[
+    {pat:'AF 330 GH',acop:'AE 812 NJ',ts:ayer.getTime(),op:1,ata:3,ejes:5,ent:14780,sal:42100,ot:'OT 2026-0398',obs:'Quedó en playa por cierre de bodega.'},
+    {pat:'AE 123 KL',acop:'AD 456 MN',ts:now-95*MIN,op:0,ata:1,ejes:5,ent:14320,sal:42780,ot:'OT 2026-0401',obs:''},
+    {pat:'AB 874 TR',acop:'ERT 215',ts:now-48*MIN,op:2,ata:2,ejes:6,ent:15100,sal:44860,ot:'',obs:''},
+    {pat:'AC 612 QS',acop:'AB 590 FR',ts:now-30*MIN,op:0,ata:1,ejes:5,ent:0,sal:14860,ot:'',obs:'Pesada de control de tara solicitada por Operaciones.',control:true},
+    {pat:'AD 905 LM',acop:'AF 044 SD',ts:now-15*MIN,op:3,ata:2,ejes:5,ent:41260,sal:14380,ot:'OT 2026-0407',obs:''}
+  ];
+  pend.forEach(function(p){
+    var o=s.operaciones[p.op];
+    var t=nuevoT(s,{ot:p.ot,buqueId:o.buqueId,clienteId:o.clienteId,productoId:o.productoId,
+      ataId:p.ata,patente:p.pat,acoplado:p.acop,ejes:p.ejes,obs:p.obs,control:!!p.control,entrada:{peso:p.ent,ts:p.ts,usuario:'J. Ortiz'}});
+    t.simSalida=p.sal;s.tickets.push(t);
+  });
+  return s;
+}
+function stamp(ts){var d=new Date(ts);return d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())+'_'+pad(d.getHours())+pad(d.getMinutes());}
+function simDe0(s,cid,pid){for(var i=0;i<s.documentos.length;i++){var d=s.documentos[i];if(d.clienteId===Number(cid)&&d.productoId===Number(pid))return d.sim;}return null;}
+function nuevoT(s,o){
+  var a=null;for(var i=0;i<s.atas.length;i++)if(s.atas[i].id===o.ataId)a=s.atas[i];
+  var b=null;for(i=0;i<s.buques.length;i++)if(s.buques[i].id===o.buqueId)b=s.buques[i];
+  return {id:s.seq++,lugar:PUESTO.lugar,balanza:PUESTO.balanza,ot:o.ot,buqueId:o.buqueId,imo:b?b.imo:'',clienteId:o.clienteId,productoId:o.productoId,
+    sim:simDe0(s,o.clienteId,o.productoId)||'',ataId:o.ataId,ataCuit:a?a.cuit:'',ataRazon:a?a.razon:'',patente:o.patente,acoplado:o.acoplado,ejes:o.ejes,obs:o.obs,control:o.control,
+    entrada:o.entrada,salida:null,neto:null,estado:'Pendiente',anulacion:null,simSalida:null};
+}
+
+var S;
+function load(){
+  try{var raw=localStorage.getItem(LS_KEY);if(raw){var o=JSON.parse(raw);if(o&&o.version===1&&Date.now()-o.seededAt<18*HOUR){S=o;return;}}}catch(e){}
+  S=seed();
+}
+function save(){try{localStorage.setItem(LS_KEY,JSON.stringify(S));}catch(e){}}
+load();
+
+/* ---------- consultas ---------- */
+function byId(arr,id){for(var i=0;i<arr.length;i++)if(String(arr[i].id)===String(id))return arr[i];return null;}
+function tk(id){return byId(S.tickets,id);}
+function cliente(id){var c=byId(S.clientes,id);return c?c.razon:'-';}
+function producto(id){var p=byId(S.productos,id);return p?p.nombre:'-';}
+function buqueN(id){var b=byId(S.buques,id);return b?b.nombre:'-';}
+function buqueImo(t){return buqueN(t.buqueId)+' · IMO '+t.imo;}
+function ataTxt(t){return t.ataRazon?t.ataRazon+' · CUIT '+t.ataCuit:'-';}
+function simDe(cid,pid){return simDe0(S,cid,pid);}
+function buquePorImo(imo){for(var i=0;i<S.buques.length;i++)if(S.buques[i].imo===String(imo))return S.buques[i];return null;}
+function opDeBuque(bid){for(var i=0;i<S.operaciones.length;i++)if(S.operaciones[i].buqueId===Number(bid))return S.operaciones[i];return null;}
+function pendientes(){return S.tickets.filter(function(t){return t.estado==='Pendiente';});}
+/* la tara es el pesaje más liviano: la entrada en una carga, la salida en una descarga */
+function roles(t,segundo){if(t.control||segundo==null)return ['',''];return t.entrada.peso<=segundo?['tara','bruto']:['bruto','tara'];}
+function bt(t){
+  if(!t.salida)return null;
+  if(t.control)return {a:['Primer pesaje',t.entrada.peso],b:['Segundo pesaje',t.salida.peso]};
+  return {a:['Bruto',Math.max(t.entrada.peso,t.salida.peso)],b:['Tara',Math.min(t.entrada.peso,t.salida.peso)]};
+}
+function pendDePatente(p){p=normPat(p);if(!p)return null;return pendientes().filter(function(t){return t.patente===p;})[0]||null;}
+function entraCargado(pid){var p=byId(S.productos,pid);return !!(p&&p.simCargado);}
+function estadoBadge(t){return t.estado==='Finalizado'?'<span class="badge b-info">Finalizado</span>':(t.estado==='Anulado'?'<span class="badge b-warn">Anulado</span>':'<span class="badge b-muted">Pendiente</span>');}
+
+function toast(msg,kind){
+  var el=document.createElement('div');el.className='toast'+(kind==='warn'?' warn':'');el.textContent=msg;
+  $('#toasts').appendChild(el);setTimeout(function(){el.remove();},4200);
+}
+
+/* ---------- íconos ---------- */
+function ico(n,sz){
+  var p={
+    puesto:'<path d="M3 20h18"/><path d="M5 20V9h14v11"/><path d="M9 9V5h6v4"/>',
+    alert:'<path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17h.01"/>',
+    info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>',
+    check:'<circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/>',
+    x:'<path d="M6 6l12 12M18 6L6 18"/>'
+  }[n]||'';
+  sz=sz||18;
+  return '<svg width="'+sz+'" height="'+sz+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+p+'</svg>';
+}
+
+/* ---------- patente argentina ---------- */
+var FLAG='<svg width="10" height="6" viewBox="0 0 10 6" aria-hidden="true"><rect width="10" height="2" fill="#75AADB"/><rect y="2" width="10" height="2" fill="#FFFFFF"/><rect y="4" width="10" height="2" fill="#75AADB"/><circle cx="5" cy="3" r=".7" fill="#F6B40E"/></svg>';
+function plate(p){
+  if(!p)return '<span class="muted">-</span>';
+  return '<span class="plate" role="img" aria-label="Patente '+esc(p)+'"><span class="plate-band" aria-hidden="true"><span>REPÚBLICA ARGENTINA</span>'+FLAG+'</span><span class="plate-num" aria-hidden="true">'+esc(p)+'</span></span>';
+}
+function platesPair(t){return '<span class="plates"><span class="cap">Camión'+plate(t.patente)+'</span>'+(t.acoplado?'<span class="cap">Acoplado'+plate(t.acoplado)+'</span>':'')+'</span>';}
+
+/* ---------- estado de interfaz (no persistente) ---------- */
+var UI={modo:'nuevo',sel:null,captura:null,obs2:'',draft:null,pq:'',tf:{q:'',estado:''}};
+function blankDraft(){return {ot:'',imo:'',buqueId:'',clienteId:'',productoId:'',imoEstado:'',ataId:'',patente:'',acoplado:'',ejes:'5',control:false,obs:''};}
+UI.draft=blankDraft();
+
+/* ---------- simulación de balanza ---------- */
+var SC={valor:0,objetivo:0,estable:true,since:0,mueveHasta:0};
+function tickScale(){
+  var reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(SC.objetivo>0&&Date.now()<SC.mueveHasta){SC.valor=SC.objetivo+(Math.random()-0.5)*700;SC.estable=false;SC.since=0;updateLive();return;}
+  var diff=SC.objetivo-SC.valor;
+  if(Math.abs(diff)>30){
+    SC.valor+= reduce?diff:diff*0.45+(Math.random()-0.5)*Math.min(160,Math.abs(diff)*0.25);
+    SC.estable=false;SC.since=0;
+  } else {
+    if(!SC.since)SC.since=Date.now();
+    if(Date.now()-SC.since>700||reduce||SC.objetivo===0){SC.valor=SC.objetivo;SC.estable=true;}
+    else{SC.valor=SC.objetivo+(Math.random()-0.5)*60;SC.estable=false;}
+  }
+  if(SC.valor<0)SC.valor=0;
+  updateLive();
+}
+setInterval(tickScale,130);
+function lectura(){return Math.max(0,r20(SC.valor));}
+function vaciar(){SC.objetivo=0;SC.valor=0;SC.estable=true;SC.since=0;SC.mueveHasta=0;}
+
+/* ---------- ruteo y render ---------- */
+function route(){var h=location.hash.replace(/^#\/?/,'')||'puesto';var parts=h.split('/');return {v:parts[0],p:parts[1]||''};}
+window.addEventListener('hashchange',function(){render();});
+function render(){
+  var app=$('#app');
+  if(!S.user){app.innerHTML=viewLogin();return;}
+  var r=route();
+  if(r.v==='config'&&!isAdmin())r.v='puesto';
+  app.innerHTML=viewTop()+viewNav(r.v)+'<main class="main" id="main">'+viewMain(r)+'</main>';
+  updateLive();
+}
+function viewMain(r){
+  switch(r.v){
+    case 'tickets':return viewTickets();
+    case 'maestros':return viewMaestros(r.p||'clientes');
+    case 'config':return viewConfig();
+    default:return viewPuesto();
+  }
+}
+
+function userBtn(id){return '<button type="button" class="link mono" data-act="fill-user" data-id="'+id+'">'+id+'</button>';}
+function viewLogin(){
+  return '<div class="login"><form class="login-card card" id="login-form" autocomplete="off">'+
+    '<div class="lbrand">'+ico('puesto',24)+'<span>Gestión de Balanzas</span><small>CGPBB</small></div>'+
+    '<p class="muted">'+esc(placeTxt())+'</p>'+
+    '<label class="field"><span>Usuario</span><input id="lg-user" value="mferreyra" autocapitalize="off" spellcheck="false"></label>'+
+    '<label class="field"><span>Contraseña</span><input type="password" id="lg-pass" value="'+CLAVE_DEMO+'"></label>'+
+    '<p class="small" id="lg-err" style="color:var(--warn)"></p>'+
+    '<button class="btn primary xl" type="submit">Ingresar</button>'+
+    '<div class="demo-users"><b style="color:var(--ink)">Usuarios de la demo</b><span>Tocá un usuario para completar el ingreso.</span>'+
+      '<span>'+userBtn('mferreyra')+' y '+userBtn('jortiz')+': Operador. Pesa, registra y anula tickets.</span>'+
+      '<span>'+userBtn('rdiaz')+': Administrador. Además edita datos maestros y configura el puesto.</span>'+
+      '<span>Contraseña de todos: <span class="mono">'+CLAVE_DEMO+'</span></span></div>'+
+    '</form></div>';
+}
+function viewTop(){
+  var fin=S.sesion&&S.sesion.turno!==turnoCorto();
+  return '<header class="top"><div class="top-l">'+ico('puesto',22)+'<span class="brand">Gestión de Balanzas</span><span class="brand-sub">CGPBB</span><span class="sep s1"></span>'+
+    '<span class="place">'+esc(placeTxt())+'</span></div>'+
+    '<div class="top-r">'+(fin?'<span class="pill off"><span class="dot"></span><span>Terminó el turno. Cerrá la sesión.</span></span>':'')+
+    '<span class="who">'+esc(S.user.rol+': '+S.user.nombre+' · '+(S.sesion?S.sesion.turno:turnoCorto()))+'</span><button class="tbtn" data-act="logout">Cerrar sesión</button></div></header>';
+}
+function viewNav(v){
+  var items=[['puesto','Puesto de balanza'],['tickets','Tickets del puesto'],['maestros','Datos maestros']];
+  if(isAdmin())items.push(['config','Configuración del puesto']);
+  return '<nav class="navbar" aria-label="Secciones"><div class="tabs2">'+items.map(function(it){return '<a href="#/'+it[0]+'"'+(v===it[0]?' aria-current="page"':'')+'>'+it[1]+'</a>';}).join('')+
+    '</div><button class="link" data-act="guia" style="white-space:nowrap">Guía de la demo</button></nav>';
+}
+function simSection(){
+  return '<details class="simbox" open><summary>Simulador de la demo</summary><div class="inner"><p class="small muted">En el puesto real la lectura llega de la balanza Toledo por el puerto serie. Acá la simulamos.</p>'+
+    '<div class="row"><button class="btn sm" data-act="sim-subir">Subir camión</button><button class="btn sm" data-act="sim-bajar">Retirar camión</button></div>'+
+    '<button class="btn sm" data-act="sim-mover">Mover camión (lectura inestable)</button>'+
+    '<button class="link small" data-act="reset" style="align-self:flex-start;margin-top:2px">Reiniciar datos de ejemplo</button></div></details>';
+}
+
+/* ---------- puesto de balanza ---------- */
+function viewPuesto(){
+  var c=S.config.balanza;
+  return '<div class="puesto">'+
+   '<div class="col col-izq">'+
+    '<section class="visor" aria-label="Lectura de balanza"><div class="vlabel">Lectura de balanza</div>'+
+      '<div class="vnum"><span id="visor-num">0</span><span class="vunit">kg</span></div>'+
+      '<div class="vfoot"><span class="vstate" id="visor-state"><i></i><span>Balanza vacía</span></span><span class="vconn">'+esc(PUESTO.marca+' · '+c.puerto+' · '+c.baudios+' bps')+'</span></div></section>'+
+    '<button class="btn primary xl" id="btn-capturar" data-act="capturar" disabled>'+capLabel()+'</button>'+
+    '<p class="caphint" id="cap-hint"></p>'+
+    simSection()+
+   '</div>'+
+   '<section class="card ticket" id="col-ticket">'+ticketView()+'</section>'+
+   '<aside class="col col-side">'+viewPendPanel()+'</aside>'+
+  '</div>';
+}
+function capLabel(){return UI.modo==='segundo'?'Capturar segundo pesaje':'Capturar primer pesaje';}
+function ticketView(){var t=tk(UI.sel);if(UI.modo==='segundo'&&t)return viewSegundo(t,false);if(UI.modo==='final'&&t)return viewSegundo(t,true);return viewNuevo();}
+function opts(arr,val,label,ph){
+  return '<option value="">'+esc(ph||'Seleccioná')+'</option>'+arr.map(function(x){return '<option value="'+esc(x.id)+'"'+(String(x.id)===String(val)?' selected':'')+'>'+esc(label(x))+'</option>';}).join('');
+}
+function roField(label,val,hint,cls){return '<label class="field"><span>'+esc(label)+(hint?'<em>'+esc(hint)+'</em>':'')+'</span><input readonly value="'+esc(val)+'"'+(cls?' class="'+cls+'"':'')+'></label>';}
+function plateField(label,p){return '<div class="field"><span>'+esc(label)+'</span><div class="platebox">'+plate(p)+'</div></div>';}
+
+function viewNuevo(){
+  var d=UI.draft;
+  var ejesOpts=[2,3,4,5,6,7,8,9].map(function(n){return '<option value="'+n+'"'+(String(n)===String(d.ejes)?' selected':'')+'>'+n+'</option>';}).join('');
+  var dl=S.buques.map(function(b){return '<option value="'+esc(b.imo)+'">'+esc(b.nombre)+'</option>';}).join('');
+  return '<div class="tk-head"><div><h1>Nuevo ticket</h1><p>Primer pesaje en '+esc(placeTxt())+'</p></div><span class="badge b-muted">Sin registrar</span></div>'+
+  '<div class="slabel">Camión</div><div class="g3">'+
+    '<label class="field"><span>Patente camión</span><input data-bind="d.patente" value="'+esc(d.patente)+'" placeholder="AA 123 BB" autocomplete="off"></label>'+
+    '<label class="field"><span>Patente acoplado<em>Opcional</em></span><input data-bind="d.acoplado" value="'+esc(d.acoplado)+'" placeholder="AA 123 BB" autocomplete="off"></label>'+
+    '<label class="field"><span>Cantidad de ejes</span><select data-bind="d.ejes">'+ejesOpts+'</select></label>'+
+  '</div><div id="pat-box">'+patBox()+'</div>'+
+  '<div class="slabel">Buque y operación</div><div class="g2">'+
+    '<label class="field"><span>IMO del buque<em>Completa cliente, producto y SIM</em></span><input class="imo" data-bind="d.imo" value="'+esc(d.imo)+'" inputmode="numeric" maxlength="7" placeholder="7 dígitos" list="dl-imo" autocomplete="off"></label>'+
+    '<datalist id="dl-imo">'+dl+'</datalist>'+
+    roField('Lugar operativo',PUESTO.lugar,'Asignado por la balanza')+
+  '</div><div id="op-box">'+opBox()+'</div>'+
+  '<div class="g2">'+
+    '<label class="field"><span>ATA</span><select data-bind="d.ataId">'+opts(S.atas,d.ataId,function(x){return x.razon+' · '+x.cuit;})+'</select></label>'+
+    '<label class="field"><span>Orden de trabajo<em>Opcional</em></span><input data-bind="d.ot" value="'+esc(d.ot)+'" placeholder="OT 2026-0000"></label>'+
+  '</div>'+
+  '<label class="check"><input type="checkbox" data-bind="d.control"'+(d.control?' checked':'')+'> Pesada de control (una de las dos instancias se registra con peso cero)</label>'+
+  '<div class="slabel">Pesos</div><div class="weights" id="w-box">'+wNuevo()+'</div>'+
+  '<label class="field"><span>Observaciones</span><textarea data-bind="d.obs" rows="2">'+esc(d.obs)+'</textarea></label>'+
+  '<div class="tk-actions"><span class="small muted req" id="req-msg"></span><div class="row"><button class="btn" data-act="limpiar">Limpiar</button><button class="btn primary" id="btn-registrar" data-act="registrar" disabled>Registrar primer pesaje</button></div></div>';
+}
+function notaWarn(txt,btn){return '<div class="note warn">'+ico('alert')+'<div class="stack" style="gap:8px"><span>'+txt+'</span>'+(btn?'<div>'+btn+'</div>':'')+'</div></div>';}
+function opBox(){
+  var d=UI.draft;var b=d.buqueId?byId(S.buques,d.buqueId):null;
+  var auto=d.imoEstado==='auto';
+  var sim=(d.clienteId&&d.productoId)?simDe(d.clienteId,d.productoId):null;
+  var simVal=!d.clienteId||!d.productoId?'Se completa con cliente y producto':(sim||'Sin documento para cliente y producto');
+  var note='';
+  if(d.imoEstado==='auto')note='<div class="note info">'+ico('check')+'<span>Cliente y producto completados desde la tabla de operaciones por buque. El código SIM sale del documento de ese cliente y producto.</span></div>';
+  else if(d.imoEstado==='manual')note='<div class="note warn">'+ico('alert')+'<span>Cliente o producto modificados a mano. El código SIM se volvió a buscar con los datos nuevos.</span></div>';
+  else if(d.imoEstado==='sinop')note=notaWarn(esc(b.nombre)+' no tiene una operación cargada, así que el IMO no completa cliente y producto. '+(isAdmin()?'Cargala ahora o elegí cliente y producto a mano.':'Elegí cliente y producto a mano, o pedí al administrador que cargue la operación.'),isAdmin()?'<button class="btn sm outline" data-act="op-cargar">Cargar la operación</button>':'');
+  else if(d.imoEstado==='nobuque')note=notaWarn('El IMO '+esc(d.imo)+' no corresponde a un buque registrado. '+(isAdmin()?'Podés darlo de alta ahora.':'El administrador lo da de alta en Datos maestros.'),isAdmin()?'<button class="btn sm outline" data-act="buque-alta">Dar de alta el buque</button>':'');
+  if(d.clienteId&&d.productoId&&!sim)note+='<div class="note warn">'+ico('alert')+'<span>No hay un documento con código SIM para '+esc(cliente(d.clienteId))+' y '+esc(producto(d.productoId))+'. Sin código SIM el ticket no se puede registrar.</span></div>';
+  return '<div class="stack" style="gap:12px"><div class="g2">'+
+    roField('Buque',b?b.nombre:(d.imo?'Sin buque para ese IMO':'Se completa con el IMO'),'',b?'auto':'')+
+    '<label class="field"><span>Cliente'+(auto?'<em>Autocompletado</em>':'')+'</span><select data-bind="d.clienteId"'+(auto?' class="auto"':'')+'>'+opts(S.clientes,d.clienteId,function(x){return x.razon;})+'</select></label>'+
+    '<label class="field"><span>Producto'+(auto?'<em>Autocompletado</em>':'')+'</span><select data-bind="d.productoId"'+(auto?' class="auto"':'')+'>'+opts(S.productos,d.productoId,function(x){return x.nombre;})+'</select></label>'+
+    roField('Código SIM',sim?sim:simVal,sim?'Autocompletado':'',sim?'mono auto':'')+
+  '</div>'+note+'</div>';
+}
+function aplicarImo(){
+  var d=UI.draft;var b=buquePorImo(d.imo);
+  d.buqueId=b?b.id:'';
+  if(!b){if(d.imoEstado){d.clienteId='';d.productoId='';}d.imoEstado=d.imo.length===7?'nobuque':'';return;}
+  var op=opDeBuque(b.id);
+  if(op){d.clienteId=op.clienteId;d.productoId=op.productoId;d.imoEstado='auto';}
+  else{d.clienteId='';d.productoId='';d.imoEstado='sinop';}
+}
+function platePrev(){var d=UI.draft;var a=normPat(d.patente),b=normPat(d.acoplado);if(!a&&!b)return '';return '<span class="plates">'+(a?'<span class="cap">Camión'+plate(a)+'</span>':'')+(b?'<span class="cap">Acoplado'+plate(b)+'</span>':'')+'</span>';}
+function patBox(){
+  var pp=platePrev(),t=pendDePatente(UI.draft.patente),n='';
+  if(t)n=notaWarn('<b>'+esc(t.patente)+'</b> tiene el ticket N.º '+num(t.id)+' pendiente de segundo pesaje. Ingresó '+(esHoy(t.entrada.ts)?'hoy a las '+hora(t.entrada.ts):'el '+fecha(t.entrada.ts)+' a las '+hora(t.entrada.ts))+'. Para abrir otro ticket de este camión, primero cerrá o anulá el pendiente.',
+    '<button class="btn sm outline" data-act="sel-pat" data-id="'+t.id+'">Ir al segundo pesaje</button>');
+  if(!pp&&!n)return '';
+  return '<div class="stack" style="gap:10px">'+pp+n+'</div>';
+}
+function focoPatente(){try{if(matchMedia('(min-width: 861px)').matches){var p=$('[data-bind="d.patente"]');if(p)p.focus();}}catch(e){}}
+function rolTxt(r){return r?' ('+r+')':'';}
+function wNuevo(){
+  var c=UI.captura;
+  return (c?'<div class="wbox"><span class="lbl">Primer pesaje · '+hora(c.ts)+'</span><span class="val">'+kg(c.peso)+' kg</span></div>'
+           :'<div class="wbox live"><span class="lbl">Primer pesaje · lectura actual</span><span class="val">'+kg(lectura())+' kg</span></div>')+
+    '<div class="wbox"><span class="lbl">Segundo pesaje</span><span class="soft">A la salida del camión</span></div>'+
+    '<div class="wbox net"><span class="lbl">Neto</span><span class="soft">Se calcula al cerrar</span></div>';
+}
+function missing(){
+  var d=UI.draft,m=[];
+  if(!normPat(d.patente))m.push(d.patente?'patente de camión válida':'patente de camión');
+  else if(pendDePatente(d.patente))m.push('cerrar o anular el ticket pendiente de '+normPat(d.patente));
+  if(d.acoplado&&!normPat(d.acoplado))m.push('patente de acoplado válida');
+  if(!d.buqueId)m.push('IMO de un buque registrado');
+  if(!d.clienteId)m.push('cliente');if(!d.productoId)m.push('producto');
+  if(d.clienteId&&d.productoId&&!simDe(d.clienteId,d.productoId))m.push('código SIM');
+  if(!d.ataId)m.push('ATA');
+  if(!UI.captura)m.push('primer pesaje');
+  return m;
+}
+function updNuevo(){
+  var btn=$('#btn-registrar');if(!btn)return;
+  var m=missing();btn.disabled=m.length>0;
+  var msg=$('#req-msg');if(msg)msg.textContent=m.length?'Falta: '+m.join(', '):'';
+}
+function viewSegundo(t,fin){
+  var head='<div class="tk-head"><div><h1>Ticket N.º '+num(t.id)+'</h1><p>Primer pesaje: '+fh(t.entrada.ts)+' · '+esc(t.entrada.usuario)+' · '+esc(placeTxt())+'</p></div>'+
+    (fin?estadoBadge(t):'<span class="badge b-warn">Pendiente de segundo pesaje</span>')+'</div>';
+  var body='<div class="slabel">Camión</div><div class="g3">'+
+     plateField('Patente camión',t.patente)+plateField('Patente acoplado',t.acoplado)+roField('Cantidad de ejes',String(t.ejes))+
+    '</div><div class="slabel">Buque y operación</div><div class="g2">'+
+     roField('Buque',buqueImo(t))+roField('Lugar operativo',t.lugar)+
+     roField('Cliente',cliente(t.clienteId))+roField('Producto',producto(t.productoId))+
+     roField('Código SIM',t.sim,'','mono')+roField('ATA',ataTxt(t))+
+     roField('Orden de trabajo',t.ot||'-')+(t.control?roField('Tipo de pesada','Pesada de control'):'')+
+    '</div><div class="slabel">Pesos</div><div class="weights" id="w-box">'+wSegundo(t,fin)+'</div>'+
+    (fin?roField('Observaciones',t.obs||'-'):'<label class="field"><span>Observaciones</span><textarea data-bind="obs2" rows="2">'+esc(UI.obs2||t.obs||'')+'</textarea></label>');
+  var act='<div class="tk-actions"><button class="btn warn" data-act="anular" data-id="'+t.id+'"'+(t.estado==='Anulado'?' disabled':'')+'>Anular ticket</button><div class="row">'+
+    (fin?(t.estado==='Finalizado'?'<button class="btn outline" data-act="comprobante" data-id="'+t.id+'">Ver comprobante</button><button class="btn outline" data-act="imprimir" data-id="'+t.id+'">Imprimir ticket</button>':'')+'<button class="btn primary" data-act="nuevo">Nuevo ticket</button>'
+        :'<button class="btn" data-act="nuevo">Volver</button><button class="btn primary" id="btn-cerrar" data-act="cerrar"'+(UI.captura?'':' disabled')+'>Cerrar ticket</button>')+
+    '</div></div>';
+  return head+body+act;
+}
+function wSegundo(t,fin){
+  var cap=fin?t.salida:UI.captura;var r=roles(t,cap?cap.peso:null);
+  var ent='<div class="wbox"><span class="lbl">Primer pesaje'+rolTxt(r[0])+' · '+cuando(t.entrada.ts)+'</span><span class="val">'+kg(t.entrada.peso)+' kg</span></div>';
+  if(fin&&!cap)return ent+'<div class="wbox"><span class="lbl">Segundo pesaje</span><span class="soft">Sin registrar</span></div><div class="wbox net"><span class="lbl">Neto</span><span class="soft">-</span></div>';
+  var sal=cap?'<div class="wbox"><span class="lbl">Segundo pesaje'+rolTxt(r[1])+' · '+hora(cap.ts)+'</span><span class="val">'+kg(cap.peso)+' kg</span></div>'
+             :'<div class="wbox live"><span class="lbl">Segundo pesaje'+rolTxt(r[1])+' · lectura actual</span><span class="val">'+kg(lectura())+' kg</span></div>';
+  var net=cap?'<div class="wbox net"><span class="lbl">Neto</span><span class="val">'+kg(Math.abs(cap.peso-t.entrada.peso))+' kg</span></div>'
+             :'<div class="wbox net"><span class="lbl">Neto</span><span class="soft">Se calcula al capturar</span></div>';
+  return ent+sal+net;
+}
+function pendList(){
+  var q=UI.pq.trim().toLowerCase();
+  return pendientes().filter(function(t){
+    if(!q)return true;
+    var d=new Date(t.entrada.ts);
+    var hay=[t.patente,t.patente.replace(/ /g,''),t.acoplado,num(t.id),String(t.id),buqueN(t.buqueId),t.imo,fecha(t.entrada.ts),pad(d.getDate())+'/'+pad(d.getMonth()+1)].join(' ').toLowerCase();
+    return hay.indexOf(q)>=0;
+  }).sort(function(a,b){return a.entrada.ts-b.entrada.ts;});
+}
+function viewPendPanel(){
+  return '<section class="card pad stack" style="gap:12px"><div class="row between" style="flex-wrap:nowrap"><h2>Pendientes de segundo pesaje</h2><span class="badge b-muted" id="pend-n">'+pendientes().length+'</span></div>'+
+   '<label class="field"><span>Buscar</span><input type="search" data-bind="pq" value="'+esc(UI.pq)+'" placeholder="Patente, ticket, buque o fecha"></label>'+
+   '<div class="plist" id="plist">'+pendItems()+'</div>'+
+   '<button class="btn outline" data-act="nuevo">Nuevo ticket</button></section>';
+}
+function pendItems(){
+  var l=pendList();if(!l.length)return '<p class="empty small">'+(UI.pq?'No hay pendientes que coincidan con la búsqueda.':'No hay camiones pendientes de segundo pesaje.')+'</p>';
+  return l.map(function(t){
+    var on=(UI.modo==='segundo')&&UI.sel===t.id;
+    return '<button class="pitem" data-act="sel" data-id="'+t.id+'" aria-pressed="'+on+'"><span class="l">'+plate(t.patente)+'<span class="sub">'+esc(buqueN(t.buqueId))+' · N.º '+num(t.id)+(t.control?' · Control':'')+'</span></span><span class="t">Ingreso<br>'+(esHoy(t.entrada.ts)?hora(t.entrada.ts):fecha(t.entrada.ts)+'<br>'+hora(t.entrada.ts))+'</span></button>';
+  }).join('');
+}
+
+/* ---------- actualización en vivo ---------- */
+function setHTML(el,h){if(el&&el.innerHTML!==h)el.innerHTML=h;}
+function capEstado(){
+  if(UI.modo==='final')return {ok:false,msg:'Ticket cerrado. Iniciá un nuevo ticket o elegí un pendiente.'};
+  var v=lectura(),t=tk(UI.sel);
+  var ctrl=UI.modo==='segundo'?(t&&t.control):UI.draft.control;
+  if(!SC.estable)return {ok:false,msg:'Esperá a que la lectura se estabilice.'};
+  if(v<PESO_MIN){
+    if(!ctrl)return {ok:false,msg:'Subí el camión a la balanza desde el simulador.'};
+    if(UI.modo==='segundo'&&t&&t.entrada.peso===0)return {ok:false,msg:'El primer pesaje fue cero. El segundo necesita el camión en la balanza.'};
+    return {ok:true,msg:'Pesada de control: se puede registrar con peso cero.'};
+  }
+  return {ok:true,msg:UI.captura?'Peso capturado. Podés volver a capturar si el camión se movió.':'Lectura estable. Podés capturar el peso.'};
+}
+function updateLive(){
+  var n=$('#visor-num');if(!n)return;
+  var v=lectura();n.textContent=kg(v);
+  var st=$('#visor-state');
+  if(st){var cls='vstate',txt;if(v<20&&SC.estable)txt='Balanza vacía';else if(SC.estable){cls+=' stable';txt='Estable';}else{cls+=' moving';txt='Estabilizando';}st.className=cls;st.lastChild.textContent=txt;}
+  var c=capEstado();
+  var btn=$('#btn-capturar');if(btn)btn.disabled=!c.ok;
+  var h=$('#cap-hint');if(h&&h.textContent!==c.msg)h.textContent=c.msg;
+  var t=tk(UI.sel);
+  if(UI.modo==='segundo'&&t&&!UI.captura)setHTML($('#w-box'),wSegundo(t,false));
+  if(UI.modo==='nuevo'){if(!UI.captura)setHTML($('#w-box'),wNuevo());updNuevo();}
+}
+function renderTicketCol(){
+  var col=$('#col-ticket');if(!col){render();return;}
+  var ae=document.activeElement;var bind=ae&&ae.getAttribute?ae.getAttribute('data-bind'):null;
+  col.innerHTML=ticketView();
+  var cb=$('#btn-capturar');if(cb)cb.textContent=capLabel();
+  var pl=$('#plist');if(pl)pl.innerHTML=pendItems();
+  var pn=$('#pend-n');if(pn)pn.textContent=pendientes().length;
+  if(bind){var el=col.querySelector('[data-bind="'+bind+'"]');if(el)el.focus();}
+  updateLive();
+}
+
+/* ---------- acciones del puesto ---------- */
+function capturar(){
+  if(!capEstado().ok)return;
+  var v=lectura();
+  UI.captura={peso:v,ts:Date.now()};
+  toast((UI.modo==='segundo'?'Segundo':'Primer')+' pesaje capturado: '+kg(v)+' kg');renderTicketCol();
+}
+function registrar(){
+  var d=UI.draft;if(missing().length)return;
+  var c=UI.captura;var neto=r20(25000+Math.random()*6000);
+  var t=nuevoT(S,{ot:d.ot.trim(),buqueId:Number(d.buqueId),clienteId:Number(d.clienteId),productoId:Number(d.productoId),ataId:Number(d.ataId),
+    patente:normPat(d.patente),acoplado:normPat(d.acoplado),ejes:Number(d.ejes),obs:d.obs.trim(),control:d.control,entrada:{peso:c.peso,ts:c.ts,usuario:S.user.nombre}});
+  t.simSalida=c.peso>=25000?r20(13500+Math.random()*2500):c.peso+neto;
+  if(d.control&&c.peso===0)t.simSalida=r20(14000+Math.random()*2000);
+  S.tickets.push(t);
+  UI.draft=blankDraft();UI.captura=null;save();
+  toast('Ticket '+num(t.id)+' registrado. Queda pendiente de segundo pesaje.');
+  vaciar();render();focoPatente();
+}
+function seleccionar(id){vaciar();UI.modo='segundo';UI.sel=Number(id);UI.captura=null;UI.obs2='';renderTicketCol();}
+function cerrar(){
+  var t=tk(UI.sel),c=UI.captura;if(!t||!c)return;
+  if(t.control&&t.entrada.peso===0&&c.peso===0){toast('Los dos pesajes no pueden ser cero.','warn');return;}
+  t.salida={peso:c.peso,ts:c.ts,usuario:S.user.nombre};
+  t.neto=Math.abs(c.peso-t.entrada.peso);
+  t.estado='Finalizado';var o=UI.obs2.trim();if(o)t.obs=o;
+  UI.modo='final';UI.captura=null;UI.obs2='';save();
+  vaciar();render();openComprobante(t.id);
+}
+function simSubir(){
+  if(UI.modo==='final'){toast('Iniciá un nuevo ticket o elegí un pendiente para pesar otro camión.');return;}
+  if(UI.modo==='segundo'){var t=tk(UI.sel);SC.objetivo=t&&t.simSalida?t.simSalida:r20(40000+Math.random()*5000);}
+  else SC.objetivo=entraCargado(UI.draft.productoId)?r20(38000+Math.random()*6000):r20(13500+Math.random()*2500);
+  SC.mueveHasta=0;
+}
+function simMover(){
+  if(SC.objetivo<=0){toast('Primero subí el camión a la balanza.');return;}
+  SC.mueveHasta=Date.now()+4000;
+}
+
+/* ---------- diálogos ---------- */
+function openDialog(html,cls,onMount){
+  var dlg=document.createElement('dialog');if(cls)dlg.className=cls;dlg.innerHTML=html;document.body.appendChild(dlg);
+  var cerrar=dlg.close.bind(dlg);
+  dlg.close=function(){if(dlg.open)cerrar();dlg.remove();};
+  dlg.addEventListener('cancel',function(e){e.preventDefault();dlg.close();});
+  dlg.addEventListener('click',function(e){if(e.target===dlg)dlg.close();var c=e.target.closest('[data-close]');if(c)dlg.close();});
+  dlg.showModal();if(onMount)onMount(dlg);return dlg;
+}
+function dlgHead(t){return '<div class="dlg-h"><h2>'+t+'</h2><button class="xbtn" data-close aria-label="Cerrar">'+ico('x')+'</button></div>';}
+function closeAll(){$$('dialog').forEach(function(d){d.close();});}
+
+function openAnular(id){
+  var t=tk(id);if(!t||t.estado==='Anulado')return;
+  openDialog(dlgHead('Anular ticket N.º '+num(t.id))+
+   '<div class="dlg-b"><div class="row">'+plate(t.patente)+'<span class="small muted">'+esc(buqueN(t.buqueId))+' · '+esc(t.estado)+'</span></div>'+
+   '<p class="small muted">El ticket anulado se conserva con todos sus datos. Se registran el usuario, la fecha y el motivo.</p>'+
+   '<label class="field"><span>Motivo de anulación</span><select id="a-mot">'+S.motivos.map(function(m){return '<option>'+esc(m.texto)+'</option>';}).join('')+'</select></label>'+
+   '<label class="field"><span>Detalle<em id="a-req">Opcional</em></span><textarea id="a-det" rows="2"></textarea></label>'+
+   '<p class="small" id="a-err" style="color:var(--warn)"></p></div>'+
+   '<div class="dlg-f"><button class="btn" data-close>Cancelar</button><button class="btn warn" id="a-ok">Anular ticket</button></div>','narrow',function(dlg){
+     $('#a-mot',dlg).addEventListener('change',function(){$('#a-req',dlg).textContent=this.value==='Otro'?'Obligatorio':'Opcional';});
+     $('#a-ok',dlg).addEventListener('click',function(){
+       var mot=$('#a-mot',dlg).value,det=$('#a-det',dlg).value.trim();
+       if(mot==='Otro'&&!det){$('#a-err',dlg).textContent='Con el motivo "Otro" hay que escribir el detalle.';return;}
+       t.estado='Anulado';t.anulacion={ts:Date.now(),usuario:S.user.nombre,motivo:mot,detalle:det};
+       if(UI.sel===t.id&&UI.modo==='segundo'){UI.modo='nuevo';UI.sel=null;UI.captura=null;vaciar();}
+       save();closeAll();toast('Ticket '+num(t.id)+' anulado. Motivo: '+mot+'.');render();
+     });
+   });
+}
+function drow(k,v){return '<div class="drow"><span>'+esc(k)+'</span><span>'+v+'</span></div>';}
+function openComprobante(id){
+  var t=tk(id);if(!t||!t.salida)return;
+  var p=bt(t);
+  openDialog(dlgHead('Comprobante digital')+
+   '<div class="comp">'+
+    '<div class="row between"><div><div class="slabel">CGPBB · Gestión de Balanzas</div><h1 style="margin-top:2px">Ticket N.º '+num(t.id)+'</h1></div>'+estadoBadge(t)+'</div>'+
+    '<section class="card dcard">'+
+      drow('Lugar operativo',esc(placeTxt()))+drow('Primer pesaje',esc(fh(t.entrada.ts)))+drow('Segundo pesaje',esc(fh(t.salida.ts)))+
+      drow('Patentes',platesPair(t))+drow('Cantidad de ejes',esc(t.ejes))+
+      drow('Buque',esc(buqueImo(t)))+drow('Cliente',esc(cliente(t.clienteId)))+drow('Producto',esc(producto(t.productoId)))+
+      drow('Código SIM','<span class="mono">'+esc(t.sim)+'</span>')+drow('ATA',esc(ataTxt(t)))+
+      (t.control?drow('Tipo de pesada','Pesada de control'):'')+drow('Orden de trabajo',esc(t.ot||'-'))+
+      (t.obs?drow('Observaciones',esc(t.obs)):'')+drow('Operador',esc(t.salida.usuario))+
+    '</section>'+
+    '<div class="w3"><div class="card"><small>'+p.a[0]+'</small><b>'+kg(p.a[1])+' kg</b></div><div class="card"><small>'+p.b[0]+'</small><b>'+kg(p.b[1])+' kg</b></div><div class="net"><small>Neto</small><b>'+kg(t.neto)+' kg</b></div></div>'+
+    '<p class="small muted">Al imprimir salen tres copias: chofer, Operaciones y Aduana.</p>'+
+   '</div>'+
+   '<div class="dlg-f"><button class="btn" data-close>Cerrar</button><button class="btn primary" id="c-print"'+(t.estado==='Finalizado'?'':' disabled')+'>Imprimir ticket</button></div>','narrow',function(dlg){
+     $('#c-print',dlg).addEventListener('click',function(){imprimir(t.id);});
+   });
+}
+function imprimir(id){
+  var t=tk(id);if(!t||t.estado!=='Finalizado')return;
+  var p=bt(t);
+  function r(k,v){return '<tr><td>'+esc(k)+'</td><td>'+v+'</td></tr>';}
+  var copia=function(dest){
+    return '<div class="pcopy"><div class="ph"><div><b>CGPBB · Gestión de Balanzas</b><div>'+esc(placeTxt())+'</div></div><span class="pc-l">Copia: '+dest+'</span></div>'+
+     '<h2>Ticket de pesaje N.º '+num(t.id)+'</h2><table>'+
+     r('Primer pesaje',esc(fh(t.entrada.ts)+' · '+t.entrada.usuario))+r('Segundo pesaje',esc(fh(t.salida.ts)+' · '+t.salida.usuario))+
+     r('Patentes',plate(t.patente)+(t.acoplado?' '+plate(t.acoplado):''))+r('Cantidad de ejes',esc(t.ejes))+
+     r('Buque',esc(buqueImo(t)))+r('Cliente',esc(cliente(t.clienteId)))+r('Producto',esc(producto(t.productoId)))+
+     r('Código SIM','<b class="mono">'+esc(t.sim)+'</b>')+r('ATA',esc(ataTxt(t)))+
+     (t.control?r('Tipo de pesada','Pesada de control'):'')+r('Orden de trabajo',esc(t.ot||'-'))+(t.obs?r('Observaciones',esc(t.obs)):'')+
+     '</table><div class="pw"><div><small>'+p.a[0]+'</small><b>'+kg(p.a[1])+' kg</b></div><div><small>'+p.b[0]+'</small><b>'+kg(p.b[1])+' kg</b></div><div><small>Neto</small><b>'+kg(t.neto)+' kg</b></div></div>'+
+     '<div class="pf"><span>Firma del balancero</span><span>Firma del chofer</span></div></div>';
+  };
+  $('#print-root').innerHTML=copia('Chofer')+copia('Operaciones')+copia('Aduana');
+  try{window.print();}catch(e){}
+}
+function kvi(k,v){return '<div><dt>'+esc(k)+'</dt><dd>'+esc(v)+'</dd></div>';}
+function openTicket(id){
+  var t=tk(id);if(!t)return;
+  var p=bt(t);
+  openDialog(dlgHead('Ticket N.º '+num(t.id))+
+   '<div class="dlg-b"><div class="row">'+estadoBadge(t)+(t.control?'<span class="badge b-muted">Pesada de control</span>':'')+'</div>'+
+   platesPair(t)+
+   '<dl class="kv">'+kvi('Lugar operativo',t.lugar)+kvi('Balanza',t.balanza)+kvi('Cantidad de ejes',t.ejes)+
+    kvi('Buque',buqueImo(t))+kvi('Cliente',cliente(t.clienteId))+kvi('Producto',producto(t.productoId))+
+    kvi('Código SIM',t.sim)+kvi('ATA',ataTxt(t))+kvi('Orden de trabajo',t.ot||'-')+
+    kvi('Primer pesaje',kg(t.entrada.peso)+' kg, '+fh(t.entrada.ts)+', '+t.entrada.usuario)+
+    kvi('Segundo pesaje',t.salida?kg(t.salida.peso)+' kg, '+fh(t.salida.ts)+', '+t.salida.usuario:'-')+
+    (p?kvi(p.a[0],kg(p.a[1])+' kg')+kvi(p.b[0],kg(p.b[1])+' kg'):'')+
+    kvi('Neto',t.neto!=null?kg(t.neto)+' kg':'-')+kvi('Observaciones',t.obs||'-')+
+   '</dl>'+
+   (t.anulacion?'<div class="note warn">'+ico('alert')+'<span>Anulado el '+esc(fh(t.anulacion.ts))+' por '+esc(t.anulacion.usuario)+'. Motivo: '+esc(t.anulacion.motivo)+(t.anulacion.detalle?'. Detalle: '+esc(t.anulacion.detalle):'')+'</span></div>':'')+
+   '</div>'+
+   '<div class="dlg-f">'+(t.estado!=='Anulado'?'<button class="btn warn" id="t-anular">Anular ticket</button>':'')+
+   (t.estado==='Finalizado'?'<button class="btn outline" id="t-print">Imprimir ticket</button><button class="btn primary" id="t-comp">Ver comprobante</button>':'')+
+   (t.estado==='Pendiente'?'<button class="btn primary" id="t-seg">Ir al segundo pesaje</button>':'')+'<button class="btn" data-close>Cerrar</button></div>','wide',function(dlg){
+     var a=$('#t-anular',dlg);if(a)a.addEventListener('click',function(){openAnular(t.id);});
+     var c=$('#t-comp',dlg);if(c)c.addEventListener('click',function(){dlg.close();openComprobante(t.id);});
+     var pr=$('#t-print',dlg);if(pr)pr.addEventListener('click',function(){imprimir(t.id);});
+     var s2=$('#t-seg',dlg);if(s2)s2.addEventListener('click',function(){
+       dlg.close();vaciar();UI.modo='segundo';UI.sel=t.id;UI.captura=null;UI.obs2='';
+       if(route().v!=='puesto')location.hash='#/puesto';else render();
+     });
+   });
+}
+function openGuia(){
+  openDialog(dlgHead('Guía de la demo')+
+   '<div class="dlg-b"><p class="small muted">Recorrido por lo que incluye la Fase 1, en el puesto de la balanza de Ingeniero White.</p><ol class="steps">'+
+   '<li>En <b>Nuevo ticket</b>, cargá la patente <b>AA 123 BB</b>. Si cargás <b>AE 123 KL</b>, el sistema avisa que ese camión ya tiene un ticket pendiente y ofrece el segundo pesaje.</li>'+
+   '<li>Ingresá el IMO <b class="mono">9486221</b>. El sistema completa el buque, el cliente, el producto y el código SIM. Elegí el ATA.</li>'+
+   '<li>En el <b>Simulador de la demo</b>, tocá <b>Subir camión</b> y después <b>Mover camión</b>. Mientras la lectura oscila, la captura queda bloqueada. Cuando el visor indique <b>Estable</b>, capturá el primer pesaje y registralo.</li>'+
+   '<li>En <b>Pendientes de segundo pesaje</b>, elegí <b>AE 123 KL</b>, subí el camión, capturá el segundo pesaje y cerrá el ticket. Se abre el comprobante para imprimir las tres copias.</li>'+
+   '<li>Elegí <b>AC 612 QS</b>, una pesada de control con el primer pesaje en cero. Subí el camión, capturá el segundo pesaje y cerrá el ticket. El neto es el peso del camión.</li>'+
+   '<li>En <b>Tickets del puesto</b>, buscá un ticket y anulalo con un motivo.</li>'+
+   '<li>Cerrá la sesión, entrá como <b class="mono">rdiaz</b> e ingresá el IMO <b class="mono">9467832</b>. Ese buque no tiene operación cargada. Cargala desde el aviso y el ticket se completa. En <b>Configuración del puesto</b>, probá la lectura de la balanza.</li>'+
+   '</ol></div><div class="dlg-f"><button class="btn primary" data-close>Empezar</button></div>','narrow');
+}
+function openLogout(){
+  var u=S.user.nombre,ini=S.sesion?S.sesion.inicio:Date.now();
+  var prim=S.tickets.filter(function(t){return t.entrada.usuario===u&&t.entrada.ts>=ini;}).length;
+  var cer=S.tickets.filter(function(t){return t.salida&&t.salida.usuario===u&&t.salida.ts>=ini;}).length;
+  var anu=S.tickets.filter(function(t){return t.anulacion&&t.anulacion.usuario===u&&t.anulacion.ts>=ini;}).length;
+  openDialog(dlgHead('Cerrar sesión')+
+   '<div class="dlg-b"><p>'+esc(u)+' · '+esc(S.sesion?S.sesion.turno:turnoCorto())+'. Sesión iniciada a las '+hora(ini)+'.</p>'+
+   '<dl class="kv">'+kvi('Primeros pesajes',prim)+kvi('Tickets cerrados',cer)+kvi('Tickets anulados',anu)+'</dl>'+
+   '<div class="note info">'+ico('info')+'<span>Quedan '+pendientes().length+' camiones pendientes de segundo pesaje. Los ve el operador del turno siguiente al ingresar.</span></div></div>'+
+   '<div class="dlg-f"><button class="btn" data-close>Cancelar</button><button class="btn primary" id="lo-ok">Cerrar sesión</button></div>','narrow',function(dlg){
+     $('#lo-ok',dlg).addEventListener('click',function(){
+       S.user=null;S.sesion=null;UI.modo='nuevo';UI.sel=null;UI.captura=null;UI.draft=blankDraft();vaciar();save();dlg.close();
+       location.hash='';render();
+     });
+   });
+}
+
+/* ---------- tickets del puesto ---------- */
+function viewTickets(){
+  var f=UI.tf;
+  return '<div class="page-head"><div><h1>Tickets del puesto</h1><p class="muted small">Tickets de '+esc(placeTxt())+'. Tocá el número para ver el detalle, imprimir o anular.</p></div></div>'+
+  '<section class="panel pad" style="margin-bottom:14px"><div class="g2">'+
+   '<label class="field"><span>Buscar</span><input type="search" data-bind="tf.q" value="'+esc(f.q)+'" placeholder="Patente, ticket, buque, IMO, cliente o fecha"></label>'+
+   '<label class="field"><span>Estado</span><select data-bind="tf.estado"><option value="">Todos</option>'+S.estados.map(function(x){return '<option'+(f.estado===x.id?' selected':'')+'>'+x.id+'</option>';}).join('')+'</select></label>'+
+  '</div></section><section class="panel"><div class="tblwrap" id="tk-table">'+ticketsTable()+'</div></section>';
+}
+function ticketsTable(){
+  var f=UI.tf,q=f.q.trim().toLowerCase();
+  var l=S.tickets.filter(function(t){
+    if(f.estado&&t.estado!==f.estado)return false;
+    if(q){var hay=[t.patente,t.patente.replace(/ /g,''),t.acoplado,num(t.id),buqueN(t.buqueId),t.imo,cliente(t.clienteId),t.ot,fecha(t.entrada.ts)].join(' ').toLowerCase();if(hay.indexOf(q)<0)return false;}
+    return true;
+  }).sort(function(a,b){return b.entrada.ts-a.entrada.ts;});
+  if(!l.length)return '<p class="empty">No hay tickets con esa búsqueda.</p>';
+  return '<table class="tbl"><thead><tr><th>Ticket</th><th>Primer pesaje</th><th>Segundo pesaje</th><th>Patente</th><th>Buque</th><th>Cliente</th><th>Producto</th><th class="r">Neto (kg)</th><th>Estado</th></tr></thead><tbody>'+
+   l.map(function(t){
+     return '<tr><td><button class="link mono" data-act="ticket" data-id="'+t.id+'">'+num(t.id)+'</button></td><td style="white-space:nowrap">'+fh(t.entrada.ts)+'</td><td>'+(t.salida?cuando(t.salida.ts):'-')+'</td><td>'+plate(t.patente)+'</td><td>'+esc(buqueN(t.buqueId))+'</td><td>'+esc(cliente(t.clienteId))+'</td><td>'+esc(producto(t.productoId))+'</td><td class="r">'+(t.neto!=null?kg(t.neto):'-')+'</td><td>'+estadoBadge(t)+'</td></tr>';
+   }).join('')+'</tbody></table>';
+}
+
+/* ---------- datos maestros ---------- */
+var ENT={
+  clientes:{t:'Clientes',cols:[{k:'razon',l:'Razón social'},{k:'cuit',l:'CUIT',v:'cuit'}]},
+  productos:{t:'Productos',cols:[{k:'nombre',l:'Producto'}]},
+  buques:{t:'Buques',cols:[{k:'nombre',l:'Buque'},{k:'imo',l:'IMO',v:'imo'}]},
+  atas:{t:'ATA',cols:[{k:'razon',l:'Razón social'},{k:'cuit',l:'CUIT',v:'cuit'}]},
+  documentos:{t:'Documentos',desc:'Cada documento relaciona un cliente y un producto con su código SIM.',cols:[{k:'clienteId',l:'Cliente',ref:'clientes'},{k:'productoId',l:'Producto',ref:'productos'},{k:'sim',l:'Código SIM',mono:true}],uniq:['clienteId','productoId'],uniqMsg:'Ya hay un documento para ese cliente y producto.'},
+  operaciones:{t:'Operaciones por buque',desc:'Se carga antes de cada operación. Al ingresar el IMO en el ticket, el sistema toma de acá el cliente y el producto.',cols:[{k:'buqueId',l:'Buque',ref:'buques'},{k:'clienteId',l:'Cliente',ref:'clientes'},{k:'productoId',l:'Producto',ref:'productos'}],uniq:['buqueId'],uniqMsg:'Ese buque ya tiene una operación cargada. Editá la existente.'}
+};
+var FIJOS={
+  estados:{t:'Estados',desc:'Precargados. No se editan.'},
+  motivos:{t:'Motivos de anulación',desc:'Precargados. No se editan.'}
+};
+function refTxt(ref,id){
+  if(ref==='clientes')return cliente(id);if(ref==='productos')return producto(id);
+  if(ref==='buques'){var b=byId(S.buques,id);return b?b.nombre+' · IMO '+b.imo:'-';}
+  return id;
+}
+function viewMaestros(sub){
+  if(!ENT[sub]&&!FIJOS[sub])sub='clientes';
+  var tabs='<nav class="tabs" aria-label="Datos maestros">'+Object.keys(ENT).concat(Object.keys(FIJOS)).map(function(k){var e=ENT[k]||FIJOS[k];return '<a href="#/maestros/'+k+'"'+(k===sub?' aria-current="page"':'')+'>'+e.t+'</a>';}).join('')+'</nav>';
+  var head='<div class="page-head"><div><h1>Datos maestros</h1><p class="muted small">'+(isAdmin()?'Altas y modificaciones a cargo del administrador.':'Solo lectura. Las altas y modificaciones las hace el administrador.')+'</p></div>'+
+   (isAdmin()&&ENT[sub]?'<button class="btn primary" data-act="m-add" data-ent="'+sub+'">Agregar</button>':'')+'</div>';
+  if(FIJOS[sub]){
+    var rows=sub==='estados'?S.estados.map(function(e){return '<tr><td>'+estadoBadge({estado:e.id})+'</td><td>'+esc(e.desc)+'</td></tr>';}).join('')
+                            :S.motivos.map(function(m){return '<tr><td>'+esc(m.texto)+'</td></tr>';}).join('');
+    return head+tabs+'<p class="small muted" style="margin-bottom:12px">'+FIJOS[sub].desc+'</p><section class="panel"><div class="tblwrap"><table class="tbl"><thead><tr>'+(sub==='estados'?'<th>Estado</th><th>Significado</th>':'<th>Motivo</th>')+'</tr></thead><tbody>'+rows+'</tbody></table></div></section>';
+  }
+  var e=ENT[sub];
+  return head+tabs+(e.desc?'<p class="small muted" style="margin-bottom:12px">'+e.desc+'</p>':'')+
+   '<section class="panel"><div class="tblwrap"><table class="tbl"><thead><tr>'+e.cols.map(function(c){return '<th>'+c.l+'</th>';}).join('')+(sub==='operaciones'?'<th>Código SIM</th>':'')+(isAdmin()?'<th class="r">Acciones</th>':'')+'</tr></thead><tbody>'+
+   S[sub].map(function(r){
+     var extra='';
+     if(sub==='operaciones'){var sim=simDe(r.clienteId,r.productoId);extra='<td>'+(sim?'<span class="mono">'+esc(sim)+'</span>':'<span class="badge b-warn">Sin documento</span>')+'</td>';}
+     return '<tr>'+e.cols.map(function(c){var v=c.ref?refTxt(c.ref,r[c.k]):r[c.k];return '<td'+(c.mono||c.v==='imo'||c.v==='cuit'?' class="mono"':'')+'>'+esc(v)+'</td>';}).join('')+extra+
+       (isAdmin()?'<td class="r"><button class="link" data-act="m-edit" data-ent="'+sub+'" data-id="'+esc(r.id)+'">Editar</button></td>':'')+'</tr>';
+   }).join('')+
+   '</tbody></table></div></section>';
+}
+function openMaestro(sub,id,pre){
+  var e=ENT[sub],arr=S[sub],row=id!=null?byId(arr,id):null;
+  var fields=e.cols.map(function(c){
+    var v=row?row[c.k]:(pre&&pre[c.k]!=null?pre[c.k]:'');var nm='f-'+c.k;
+    if(c.ref){
+      var lab=c.ref==='buques'?function(x){return x.nombre+' · IMO '+x.imo;}:(c.ref==='clientes'?function(x){return x.razon;}:function(x){return x.nombre;});
+      return '<label class="field"><span>'+c.l+'</span><select id="'+nm+'">'+opts(S[c.ref],v,lab)+'</select></label>';
+    }
+    var ph=c.v==='cuit'?'30-12345678-9':(c.v==='imo'?'7 dígitos':'');
+    return '<label class="field"><span>'+c.l+'</span><input id="'+nm+'" value="'+esc(v)+'"'+(ph?' placeholder="'+ph+'"':'')+(c.v==='imo'?' inputmode="numeric" maxlength="7"':'')+'></label>';
+  }).join('');
+  openDialog(dlgHead((row?'Editar ':'Agregar a ')+e.t.toLowerCase())+'<div class="dlg-b"><div class="g2">'+fields+'</div><p class="small" id="f-err" style="color:var(--warn)"></p></div>'+
+   '<div class="dlg-f"><button class="btn" data-close>Cancelar</button><button class="btn primary" id="f-ok">Guardar</button></div>','',function(dlg){
+     $('#f-ok',dlg).addEventListener('click',function(){
+       var data={},err='';
+       e.cols.forEach(function(c){
+         var v=$('#f-'+c.k,dlg).value.trim();
+         if(!v&&!err)err='Completá todos los campos.';
+         if(v&&c.v==='cuit'&&!/^\d{2}-\d{8}-\d$/.test(v)&&!err)err='El CUIT tiene que tener el formato 30-12345678-9.';
+         if(v&&c.v==='imo'&&!/^\d{7}$/.test(v)&&!err)err='El IMO tiene que tener siete dígitos.';
+         if(v&&c.v==='imo'&&!err&&arr.some(function(x){return x.imo===v&&x!==row;}))err='Ya hay un buque con ese IMO.';
+         data[c.k]=c.ref?Number(v):v;
+       });
+       if(!err&&e.uniq&&arr.some(function(x){return x!==row&&e.uniq.every(function(k){return String(x[k])===String(data[k]);});}))err=e.uniqMsg;
+       if(err){$('#f-err',dlg).textContent=err;return;}
+       if(row)Object.keys(data).forEach(function(k){row[k]=data[k];});
+       else{data.id=arr.reduce(function(m,x){return Math.max(m,Number(x.id)||0);},0)+1;arr.push(data);}
+       var aviso='';
+       if((sub==='operaciones'||sub==='documentos')&&data.clienteId&&!simDe(data.clienteId,data.productoId))aviso=' Falta el documento con código SIM para ese cliente y producto.';
+       var dr=UI.draft;if(dr.imo&&(dr.imoEstado==='sinop'||dr.imoEstado==='nobuque'))aplicarImo();
+       save();dlg.close();toast('Cambios guardados en '+e.t.toLowerCase()+'.'+aviso,aviso?'warn':'');render();
+     });
+   });
+}
+
+/* ---------- configuración del puesto ---------- */
+function selOpts(list,val){return list.map(function(x){return '<option'+(String(x)===String(val)?' selected':'')+'>'+x+'</option>';}).join('');}
+function proximo(r){
+  var h={'Cada 1 hora':1,'Cada 4 horas':4,'Cada 12 horas':12}[r.frecuencia];
+  if(h)return r.ultimo.ts+h*HOUR;
+  var d=new Date();d.setHours(23,0,0,0);if(d.getTime()<Date.now())d=new Date(d.getTime()+DAY);return d.getTime();
+}
+function viewConfig(){
+  var b=S.config.balanza,r=S.config.respaldo,l=S.config.lectura,u=r.ultimo;
+  return '<div class="page-head"><div><h1>Configuración del puesto</h1><p class="muted small">'+esc(placeTxt())+'. Solo el administrador ve y modifica esta sección.</p></div></div>'+
+  '<div class="cfg">'+
+   '<section class="panel pad stack"><div><h2>Balanza</h2><p class="small muted" style="margin-top:4px">Parámetros del puerto serie por el que la balanza '+PUESTO.marca+' envía la cadena de datos con el peso.</p></div>'+
+    '<div class="g2">'+
+     '<label class="field"><span>Puerto</span><select id="cb-puerto">'+selOpts(['COM1','COM2','COM3','COM4','COM5','COM6'],b.puerto)+'</select></label>'+
+     '<label class="field"><span>Velocidad (bps)</span><select id="cb-baud">'+selOpts([1200,2400,4800,9600,19200],b.baudios)+'</select></label>'+
+     '<label class="field"><span>Bits de datos</span><select id="cb-datos">'+selOpts([7,8],b.datos)+'</select></label>'+
+     '<label class="field"><span>Paridad</span><select id="cb-par">'+selOpts(['Ninguna','Par','Impar'],b.paridad)+'</select></label>'+
+     '<label class="field"><span>Bits de parada</span><select id="cb-stop">'+selOpts([1,2],b.parada)+'</select></label>'+
+     roField('Marca',PUESTO.marca)+
+    '</div><div class="row" style="justify-content:flex-end"><button class="btn" data-act="cfg-test">Probar lectura</button><button class="btn primary" data-act="cfg-bal">Guardar parámetros</button></div><div id="cb-test"></div></section>'+
+   '<section class="panel pad stack"><div><h2>Respaldo de la base</h2><p class="small muted" style="margin-top:4px">Copia periódica de la base del puesto a una carpeta de red.</p></div>'+
+    '<label class="field"><span>Carpeta de red</span><input id="cr-ruta" class="mono" value="'+esc(r.ruta)+'"></label>'+
+    '<label class="field"><span>Frecuencia</span><select id="cr-frec">'+selOpts(['Cada 1 hora','Cada 4 horas','Cada 12 horas','Diario a las 23:00'],r.frecuencia)+'</select></label>'+
+    '<div class="stack" style="gap:8px"><span class="slabel">Último respaldo</span><dl class="status" id="cr-status">'+respStatus()+'</dl></div>'+
+    '<div class="row" style="justify-content:flex-end"><button class="btn" data-act="cfg-run" id="cr-run">Respaldar ahora</button><button class="btn primary" data-act="cfg-resp">Guardar respaldo</button></div></section>'+
+   '<section class="panel pad stack wide"><div><h2>Usuario de solo lectura</h2><p class="small muted" style="margin-top:4px">Para consultas directas a la base y para conectar Power BI. No puede modificar datos.</p></div>'+
+    '<div class="g3">'+roField('Servidor',l.servidor,'','mono')+roField('Base de datos',l.base,'','mono')+roField('Usuario',l.usuario,'','mono')+
+     '<label class="field"><span>Contraseña</span><input readonly id="cl-pass" type="password" class="mono" value="'+esc(l.clave)+'"></label>'+
+     roField('Permisos',l.alcance)+
+     '<div class="field"><span>&nbsp;</span><div class="row"><button class="btn sm" data-act="cfg-show">Mostrar contraseña</button><button class="btn sm outline" data-act="cfg-copy">Copiar datos de conexión</button></div></div>'+
+    '</div></section>'+
+  '</div>';
+}
+function testLectura(){
+  var v=lectura(),est=SC.estable,now=new Date(),stop=$('#cb-stop').value;
+  var cadena='[STX] 0 '+(est?'0':'2')+' 0 '+String(v).padStart(6,'0')+' 000000 [CR]';
+  return '<div class="stack" style="gap:8px"><span class="slabel">Prueba de lectura · '+hora(now)+':'+pad(now.getSeconds())+'</span>'+
+    '<p class="small muted">'+esc($('#cb-puerto').value+' · '+$('#cb-baud').value+' bps · '+$('#cb-datos').value+' bits de datos · paridad '+$('#cb-par').value.toLowerCase()+' · '+stop+(stop==='1'?' bit':' bits')+' de parada')+'</p>'+
+    '<div class="cadena mono">'+esc(cadena)+'</div>'+
+    '<dl class="status" style="grid-template-columns:repeat(3,minmax(0,1fr))">'+
+    '<div><dt>Peso leído</dt><dd class="mono">'+kg(v)+' kg</dd></div><div><dt>Tara</dt><dd class="mono">0 kg</dd></div>'+
+    '<div><dt>Estado</dt><dd>'+(v<20&&est?'Balanza vacía':(est?'Estable':'En movimiento'))+'</dd></div></dl>'+
+    '<p class="small muted">En la demo la cadena se arma con la lectura del simulador. Si hay un camión en la balanza, la prueba muestra su peso.</p></div>';
+}
+function respStatus(){
+  var r=S.config.respaldo,u=r.ultimo;
+  if(u.enCurso)return '<div><dt>Estado</dt><dd><span class="badge b-muted">En curso</span></dd></div><div><dt>Inicio</dt><dd>'+fh(u.ts)+'</dd></div><div><dt>Archivo</dt><dd class="mono small">-</dd></div><div><dt>Próximo</dt><dd>-</dd></div>';
+  return '<div><dt>Estado</dt><dd>'+(u.ok?'<span class="badge b-ok">Correcto</span>':'<span class="badge b-warn">Con error</span>')+'</dd></div>'+
+    '<div><dt>Fecha y hora</dt><dd>'+fh(u.ts)+'</dd></div>'+
+    '<div><dt>Archivo</dt><dd class="mono small">'+esc(u.archivo)+' · '+esc(u.tam)+'</dd></div>'+
+    '<div><dt>Próximo</dt><dd>'+fh(proximo(r))+'</dd></div>';
+}
+
+/* ---------- eventos ---------- */
+function doLogin(){
+  var id=$('#lg-user').value.trim().toLowerCase(),pass=$('#lg-pass').value;
+  var u=USERS.filter(function(x){return x.id===id;})[0];
+  if(!u||pass!==CLAVE_DEMO){$('#lg-err').textContent='Usuario o contraseña incorrectos.';return;}
+  S.user=u;S.sesion={inicio:Date.now(),turno:turnoCorto()};save();
+  if(location.hash!=='#/puesto')location.hash='#/puesto';
+  render();
+  if(!ssGet('guia')){ssSet('guia','1');openGuia();}
+}
+function ssGet(k){try{return sessionStorage.getItem('cgpbb-f1-'+k);}catch(e){return null;}}
+function ssSet(k,v){try{sessionStorage.setItem('cgpbb-f1-'+k,v);}catch(e){}}
+document.addEventListener('click',function(e){
+  var el=e.target.closest('[data-act]');if(!el||el.disabled)return;
+  var a=el.getAttribute('data-act');var id=el.getAttribute('data-id');
+  switch(a){
+    case 'logout':openLogout();break;
+    case 'guia':openGuia();break;
+    case 'reset':
+      openDialog(dlgHead('Reiniciar datos de ejemplo')+'<div class="dlg-b"><p>Se borran los tickets y los cambios hechos en esta demo, y se vuelven a cargar los datos iniciales.</p></div><div class="dlg-f"><button class="btn" data-close>Cancelar</button><button class="btn warn" id="rs-ok">Reiniciar datos</button></div>','narrow',function(dlg){
+        $('#rs-ok',dlg).addEventListener('click',function(){var u=S.user,ss=S.sesion;S=seed();S.user=u;S.sesion=ss;UI.modo='nuevo';UI.sel=null;UI.captura=null;UI.draft=blankDraft();UI.pq='';vaciar();save();dlg.close();render();toast('Datos de ejemplo reiniciados.');});
+      });break;
+    case 'capturar':capturar();break;
+    case 'registrar':registrar();break;
+    case 'limpiar':UI.draft=blankDraft();UI.captura=null;vaciar();renderTicketCol();focoPatente();break;
+    case 'sel':seleccionar(id);break;
+    case 'sel-pat':UI.draft=blankDraft();seleccionar(id);break;
+    case 'nuevo':vaciar();UI.modo='nuevo';UI.sel=null;UI.captura=null;if(route().v!=='puesto')location.hash='#/puesto';else{renderTicketCol();focoPatente();}break;
+    case 'op-cargar':openMaestro('operaciones',null,{buqueId:UI.draft.buqueId});break;
+    case 'buque-alta':openMaestro('buques',null,{imo:UI.draft.imo});break;
+    case 'fill-user':$('#lg-user').value=id;$('#lg-pass').value=CLAVE_DEMO;$('#lg-err').textContent='';break;
+    case 'cerrar':cerrar();break;
+    case 'anular':openAnular(Number(id));break;
+    case 'comprobante':openComprobante(Number(id));break;
+    case 'imprimir':imprimir(Number(id));break;
+    case 'sim-subir':simSubir();break;
+    case 'sim-bajar':SC.objetivo=0;SC.mueveHasta=0;break;
+    case 'sim-mover':simMover();break;
+    case 'ticket':openTicket(Number(id));break;
+    case 'm-add':openMaestro(el.getAttribute('data-ent'),null);break;
+    case 'm-edit':openMaestro(el.getAttribute('data-ent'),id);break;
+    case 'cfg-bal':
+      var b=S.config.balanza;b.puerto=$('#cb-puerto').value;b.baudios=Number($('#cb-baud').value);b.datos=Number($('#cb-datos').value);b.paridad=$('#cb-par').value;b.parada=Number($('#cb-stop').value);
+      save();toast('Parámetros de la balanza guardados: '+b.puerto+', '+b.baudios+' bps, '+b.datos+' bits, paridad '+b.paridad.toLowerCase()+', '+b.parada+' bit de parada.');break;
+    case 'cfg-test':setHTML($('#cb-test'),testLectura());break;
+    case 'cfg-resp':
+      var ruta=$('#cr-ruta').value.trim();if(!/^\\\\[^\\]+\\.+/.test(ruta)){toast('Ingresá una carpeta de red con el formato \\\\servidor\\carpeta.','warn');break;}
+      S.config.respaldo.ruta=ruta;S.config.respaldo.frecuencia=$('#cr-frec').value;save();setHTML($('#cr-status'),respStatus());toast('Respaldo configurado: '+S.config.respaldo.frecuencia.toLowerCase()+'.');break;
+    case 'cfg-run':
+      var r=S.config.respaldo;if(r.ultimo.enCurso)break;
+      r.ultimo={ts:Date.now(),enCurso:true};setHTML($('#cr-status'),respStatus());el.disabled=true;
+      setTimeout(function(){r.ultimo={ts:Date.now(),ok:true,archivo:'balanzas_iw1_'+stamp(Date.now())+'.bak',tam:'18,5 MB'};save();setHTML($('#cr-status'),respStatus());var bt2=$('#cr-run');if(bt2)bt2.disabled=false;toast('Respaldo completado en '+r.ruta+'.');},1600);break;
+    case 'cfg-show':var pi=$('#cl-pass');if(pi){var show=pi.type==='password';pi.type=show?'text':'password';el.textContent=show?'Ocultar contraseña':'Mostrar contraseña';}break;
+    case 'cfg-copy':
+      var l=S.config.lectura;var txt='Servidor: '+l.servidor+'\nBase de datos: '+l.base+'\nUsuario: '+l.usuario+'\nContraseña: '+l.clave;
+      try{navigator.clipboard.writeText(txt).then(function(){toast('Datos de conexión copiados.');},function(){toast('No se pudo copiar. Copialos a mano.','warn');});}catch(err){toast('No se pudo copiar. Copialos a mano.','warn');}
+      break;
+  }
+});
+document.addEventListener('submit',function(e){e.preventDefault();if(e.target&&e.target.id==='login-form')doLogin();});
+function onBind(e){
+  var el=e.target;var b=el.getAttribute&&el.getAttribute('data-bind');if(!b)return;
+  var val=el.type==='checkbox'?el.checked:el.value;
+  if(b.indexOf('d.')===0){
+    var k=b.slice(2),d=UI.draft;
+    if(k==='imo'){
+      var clean=String(val).replace(/\D/g,'').slice(0,7);if(clean!==val)el.value=clean;
+      if(clean===d.imo)return;d.imo=clean;aplicarImo();setHTML($('#op-box'),opBox());updateLive();return;
+    }
+    d[k]=val;
+    if(k==='clienteId'||k==='productoId'){if(d.imoEstado==='auto')d.imoEstado='manual';setHTML($('#op-box'),opBox());var f=$('#op-box [data-bind="'+b+'"]');if(f)f.focus();}
+    if(k==='patente'||k==='acoplado')setHTML($('#pat-box'),patBox());
+    updateLive();return;
+  }
+  if(b==='obs2'){UI.obs2=val;return;}
+  if(b==='pq'){UI.pq=val;var pl=$('#plist');if(pl)pl.innerHTML=pendItems();return;}
+  if(b.indexOf('tf.')===0){UI.tf[b.slice(3)]=val;var tt=$('#tk-table');if(tt)tt.innerHTML=ticketsTable();return;}
+}
+document.addEventListener('input',function(e){
+  var el=e.target;if(el.tagName!=='SELECT'&&el.type!=='checkbox')onBind(e);
+});
+document.addEventListener('change',function(e){
+  var el=e.target;if(el.tagName==='SELECT'||el.type==='checkbox')onBind(e);
+});
+
+render();
+})();
+</script>
+</body>
+</html>
